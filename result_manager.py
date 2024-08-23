@@ -217,6 +217,37 @@ velocity_scaler = Slider(
 # Map objects #
 ###############
 
+# Folder 1: TDE slip rates
+# Plotting these first so that coastlines, segments, and stations lie above
+tde_obj_1 = fig.patches(
+    xs="xtri",
+    ys="ytri",
+    source=tdesource,
+    fill_color={"field": "sstri", "transform": slip_color_mapper},
+    line_width=0,
+    visible=False,
+)
+
+# Folder 1: Static segments. Always shown
+seg_color_obj_1 = fig.multi_line(
+    xs="xseg",
+    ys="yseg",
+    line_color="blue",
+    source=segsource,
+    line_width=1,
+    visible=True,
+)
+
+# Folder 1: Colored line rates
+seg_color_obj_1 = fig.multi_line(
+    xs="xseg",
+    ys="yseg",
+    line_color={"field": "sscolor", "transform": slip_color_mapper},
+    source=segsource,
+    line_width=4,
+    visible=False,
+)
+
 # Coastlines
 fig.line(
     COASTLINES["lon"],
@@ -253,26 +284,6 @@ mod_vel_obj_1 = fig.segment(
     line_width=1,
     color="red",
     alpha=0.5,
-    visible=False,
-)
-
-# Folder 1: Colored line rates
-seg_color_obj_1 = fig.multi_line(
-    xs="xseg",
-    ys="yseg",
-    line_color={"field": "sscolor", "transform": slip_color_mapper},
-    source=segsource,
-    line_width=4,
-    visible=False,
-)
-
-# Folder 1: TDE slip rates
-tde_obj_1 = fig.patches(
-    xs="xtri",
-    ys="ytri",
-    source=tdesource,
-    fill_color={"field": "sstri", "transform": slip_color_mapper},
-    line_width=0,
     visible=False,
 )
 
