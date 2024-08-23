@@ -1,3 +1,4 @@
+import os
 import scipy
 import panel as pn
 import pandas as pd
@@ -30,35 +31,79 @@ pn.extension()
 
 
 # Step 1: Create a Bokeh button
-load_folder_button_1 = Button(label="Select a Folder", button_type="success")
+# load_folder_button_1 = Button(label="Select a Folder", button_type="success")
+
+# # Step 2: Create a Div to display the selected folder name
+# load_folder_text_1 = Div(text="NA", width=100, height=10)
+
+# # Step 3: JavaScript code to create a hidden folder input and handle the folder selection
+# load_folder_button_callback_1 = CustomJS(
+#     args=dict(load_folder_text_1=load_folder_text_1),
+#     code="""
+#     var input = document.createElement('input');
+#     input.type = 'file';
+#     input.webkitdirectory = true;
+#     input.onchange = function() {
+#         var files = input.files;
+#         if (files.length > 0) {
+#             // Extract the folder path from the first selected file
+#             var path = files[0].webkitRelativePath;
+#             var folderName = path.split('/')[0];
+#             load_folder_text_1.text = folderName;
+#         } else {
+#             load_folder_text_1.text = 'NA';
+#         }
+#     };
+#     input.click();
+# """,
+# )
+
+# # Step 4: Attach the callback to the button
+# load_folder_button_1.js_on_event("button_click", load_folder_button_callback_1)
+
+import tkinter as tk
+from tkinter import filedialog
+from bokeh.models import CustomJS, Button, Div
+from bokeh.layouts import column
+from bokeh.plotting import curdoc
+from bokeh.io import output_notebook, show
+
+# output_notebook()
+
+# Function to open a folder dialog using tkinter
+def select_folder():
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+    foldername = filedialog.askdirectory(title="load")
+    return foldername
+
+# Step 1: Create a Bokeh button
+button = Button(label="load", button_type="success")
 
 # Step 2: Create a Div to display the selected folder name
-load_folder_text_1 = Div(text="NA", width=100, height=10)
+div = Div(text="NA", width=400, height=100)
 
-# Step 3: JavaScript code to create a hidden folder input and handle the folder selection
-load_folder_button_callback_1 = CustomJS(
-    args=dict(load_folder_text_1=load_folder_text_1),
-    code="""
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.webkitdirectory = true;
-    input.onchange = function() {
-        var files = input.files;
-        if (files.length > 0) {
-            // Extract the folder path from the first selected file
-            var path = files[0].webkitRelativePath;
-            var folderName = path.split('/')[0];
-            load_folder_text_1.text = folderName;
-        } else {
-            load_folder_text_1.text = 'NA';
-        }
-    };
-    input.click();
-""",
-)
+# Step 3: Python callback to handle button click and update the Div
+def on_button_click():
+    foldername = select_folder()
+    if foldername:
+        div.text = f'{foldername}'
+    else:
+        div.text = 'NA'
 
-# Step 4: Attach the callback to the button
-load_folder_button_1.js_on_event("button_click", load_folder_button_callback_1)
+    if div.text != "NA":
+        os.path.basename(os.path.normpath(div.text))
+
+
+# Step 4: Attach the Python callback to the Bokeh button
+button.on_click(on_button_click)
+
+print(div.text)
+
+# Step 5: Layout and show
+layout = column(button, div)
+curdoc().add_root(layout)
+
 
 ##########################
 # END: Get folder name #
@@ -66,7 +111,11 @@ load_folder_button_1.js_on_event("button_click", load_folder_button_callback_1)
 
 
 # Set up data set
-dir1 = "0000000343"
+# dir1 = "0000000343"
+dir1 = div.text
+
+
+
 station_file_1 = dir1 + "/model_station.csv"
 station = pd.read_csv(station_file_1)
 segment_file_1 = dir1 + "/model_segment.csv"
@@ -373,8 +422,6 @@ tde_checkbox_1.js_on_change("active", tde_checkbox_callback_1)
 ###############################
 # Placing controls for folder 1
 grid_layout[0:1, 0] = pn.Column(
-    pn.pane.Bokeh(load_folder_button_1),
-    pn.pane.Bokeh(load_folder_text_1),
     pn.pane.Bokeh(folder_label_1),
     pn.pane.Bokeh(loc_checkbox_1),
     pn.pane.Bokeh(obs_vel_checkbox_1),
