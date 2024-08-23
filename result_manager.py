@@ -79,6 +79,21 @@ segsource = ColumnDataSource(
     ),
 )
 
+tdesource = ColumnDataSource(
+    dict(
+        xtri=[
+            np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
+            for j in range(len(meshes.lon1))
+        ],
+        ytri=[
+            np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
+            for j in range(len(meshes.lon1))
+        ],
+        sstri=list(meshes["strike_slip_rate"]),
+        dstri=list(meshes["dip_slip_rate"]),
+    ),
+)
+
 ################
 # Figure setup #
 ################
@@ -208,6 +223,16 @@ seg_color_obj_1 = fig.multi_line(
     visible=False,
 )
 
+# Folder 1: TDE slip rates
+tde_obj_1 = fig.patches(
+    xs="xtri",
+    ys="ytri",
+    source=tdesource,
+    fill_color={"field": "sstri", "transform": slip_color_mapper},
+    line_width=0,
+    visible=False,
+)
+
 
 #############
 # Callbacks #
@@ -236,6 +261,13 @@ mod_vel_checkbox_callback_1 = CustomJS(
 
 seg_color_checkbox_callback_1 = CustomJS(
     args={"segment": seg_color_obj_1},
+    code="""
+    segment.visible = cb_obj.active.includes(0);
+""",
+)
+
+tde_checkbox_callback_1 = CustomJS(
+    args={"segment": tde_obj_1},
     code="""
     segment.visible = cb_obj.active.includes(0);
 """,
@@ -282,6 +314,7 @@ obs_vel_checkbox_1.js_on_change("active", obs_vel_checkbox_callback_1)
 mod_vel_checkbox_1.js_on_change("active", mod_vel_checkbox_callback_1)
 velocity_scaler.js_on_change("value", velocity_scaler_callback)
 seg_color_checkbox_1.js_on_change("active", seg_color_checkbox_callback_1)
+tde_checkbox_1.js_on_change("active", tde_checkbox_callback_1)
 
 ##############################
 # Place objects on panel grid #
@@ -299,9 +332,13 @@ grid_layout[0:1, 0] = pn.Column(
     pn.pane.Bokeh(str_vel_checkbox_1),
     pn.pane.Bokeh(mog_vel_checkbox_1),
 )
-grid_layout[7:8, 0] = pn.Column(
+grid_layout[5, 0] = pn.Column(
     pn.pane.Bokeh(seg_color_checkbox_1),
 )
+grid_layout[6, 0] = pn.Column(
+    pn.pane.Bokeh(tde_checkbox_1),
+)
+
 
 # Placing controls for folder 2
 grid_layout[0:1, 1] = pn.Column(
@@ -317,7 +354,7 @@ grid_layout[0:1, 1] = pn.Column(
     pn.pane.Bokeh(mog_vel_checkbox_2),
 )
 
-grid_layout[4:6, 0:1] = pn.Column(
+grid_layout[4, 0:1] = pn.Column(
     pn.pane.Bokeh(velocity_scaler),
 )
 
