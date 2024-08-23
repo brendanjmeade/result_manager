@@ -69,6 +69,11 @@ from bokeh.plotting import curdoc
 from bokeh.io import output_notebook, show
 
 # output_notebook()
+VELOCITY_SCALE = 0.01
+
+source = ColumnDataSource(dict([]))
+segsource = ColumnDataSource(dict([]))
+trisource = ColumnDataSource(dict([]))
 
 # Function to open a folder dialog using tkinter
 def select_folder():
@@ -92,7 +97,62 @@ def on_button_click():
         div.text = 'NA'
 
     if div.text != "NA":
-        os.path.basename(os.path.normpath(div.text))
+        div.text = os.path.basename(os.path.normpath(div.text))
+
+    dir1 = div.text
+    station_file_1 = dir1 + "/model_station.csv"
+    station = pd.read_csv(station_file_1)
+    segment_file_1 = dir1 + "/model_segment.csv"
+    segment = pd.read_csv(segment_file_1)
+    mesh_file_1 = dir1 + "/model_meshes.csv"
+    meshes = pd.read_csv(mesh_file_1)
+
+    VELOCITY_SCALE = 0.01
+    source = ColumnDataSource(
+        data={
+            "lon": station.lon,
+            "lat": station.lat,
+            "obs_east_vel": station.east_vel,
+            "obs_north_vel": station.north_vel,
+            "obs_east_vel_lon": station.lon + VELOCITY_SCALE * station.east_vel,
+            "obs_north_vel_lat": station.lat + VELOCITY_SCALE * station.north_vel,
+            "mod_east_vel": station.model_east_vel,
+            "mod_north_vel": station.model_north_vel,
+            "mod_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel,
+            "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
+        }
+    )
+
+    # Source for block bounding segments. Dict of length n_segments
+    segsource = ColumnDataSource(
+        dict(
+            xseg=[
+                np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
+                for i in range(len(segment))
+            ],
+            yseg=[
+                np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
+                for i in range(len(segment))
+            ],
+            sscolor=list(segment["model_strike_slip_rate"]),
+            dscolor=list(segment["model_dip_slip_rate"]),
+        ),
+    )
+
+    tdesource = ColumnDataSource(
+        dict(
+            xtri=[
+                np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
+                for j in range(len(meshes.lon1))
+            ],
+            ytri=[
+                np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
+                for j in range(len(meshes.lon1))
+            ],
+            sstri=list(meshes["strike_slip_rate"]),
+            dstri=list(meshes["dip_slip_rate"]),
+        ),
+    )
 
 
 # Step 4: Attach the Python callback to the Bokeh button
@@ -101,8 +161,8 @@ button.on_click(on_button_click)
 print(div.text)
 
 # Step 5: Layout and show
-layout = column(button, div)
-curdoc().add_root(layout)
+# layout = column(button, div)
+# curdoc().add_root(layout)
 
 
 ##########################
@@ -112,16 +172,14 @@ curdoc().add_root(layout)
 
 # Set up data set
 # dir1 = "0000000343"
-dir1 = div.text
+# dir1 = div.text
 
-
-
-station_file_1 = dir1 + "/model_station.csv"
-station = pd.read_csv(station_file_1)
-segment_file_1 = dir1 + "/model_segment.csv"
-segment = pd.read_csv(segment_file_1)
-mesh_file_1 = dir1 + "/model_meshes.csv"
-meshes = pd.read_csv(mesh_file_1)
+# station_file_1 = dir1 + "/model_station.csv"
+# station = pd.read_csv(station_file_1)
+# segment_file_1 = dir1 + "/model_segment.csv"
+# segment = pd.read_csv(segment_file_1)
+# mesh_file_1 = dir1 + "/model_meshes.csv"
+# meshes = pd.read_csv(mesh_file_1)
 
 
 def get_coastlines():
@@ -137,52 +195,52 @@ COASTLINES = get_coastlines()
 # Data sources #
 ################
 
-VELOCITY_SCALE = 0.01
-source = ColumnDataSource(
-    data={
-        "lon": station.lon,
-        "lat": station.lat,
-        "obs_east_vel": station.east_vel,
-        "obs_north_vel": station.north_vel,
-        "obs_east_vel_lon": station.lon + VELOCITY_SCALE * station.east_vel,
-        "obs_north_vel_lat": station.lat + VELOCITY_SCALE * station.north_vel,
-        "mod_east_vel": station.model_east_vel,
-        "mod_north_vel": station.model_north_vel,
-        "mod_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel,
-        "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
-    }
-)
+# VELOCITY_SCALE = 0.01
+# source = ColumnDataSource(
+#     data={
+#         "lon": station.lon,
+#         "lat": station.lat,
+#         "obs_east_vel": station.east_vel,
+#         "obs_north_vel": station.north_vel,
+#         "obs_east_vel_lon": station.lon + VELOCITY_SCALE * station.east_vel,
+#         "obs_north_vel_lat": station.lat + VELOCITY_SCALE * station.north_vel,
+#         "mod_east_vel": station.model_east_vel,
+#         "mod_north_vel": station.model_north_vel,
+#         "mod_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel,
+#         "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
+#     }
+# )
 
-# Source for block bounding segments. Dict of length n_segments
-segsource = ColumnDataSource(
-    dict(
-        xseg=[
-            np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
-            for i in range(len(segment))
-        ],
-        yseg=[
-            np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
-            for i in range(len(segment))
-        ],
-        sscolor=list(segment["model_strike_slip_rate"]),
-        dscolor=list(segment["model_dip_slip_rate"]),
-    ),
-)
+# # Source for block bounding segments. Dict of length n_segments
+# segsource = ColumnDataSource(
+#     dict(
+#         xseg=[
+#             np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
+#             for i in range(len(segment))
+#         ],
+#         yseg=[
+#             np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
+#             for i in range(len(segment))
+#         ],
+#         sscolor=list(segment["model_strike_slip_rate"]),
+#         dscolor=list(segment["model_dip_slip_rate"]),
+#     ),
+# )
 
-tdesource = ColumnDataSource(
-    dict(
-        xtri=[
-            np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
-            for j in range(len(meshes.lon1))
-        ],
-        ytri=[
-            np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
-            for j in range(len(meshes.lon1))
-        ],
-        sstri=list(meshes["strike_slip_rate"]),
-        dstri=list(meshes["dip_slip_rate"]),
-    ),
-)
+# tdesource = ColumnDataSource(
+#     dict(
+#         xtri=[
+#             np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
+#             for j in range(len(meshes.lon1))
+#         ],
+#         ytri=[
+#             np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
+#             for j in range(len(meshes.lon1))
+#         ],
+#         sstri=list(meshes["strike_slip_rate"]),
+#         dstri=list(meshes["dip_slip_rate"]),
+#     ),
+# )
 
 ################
 # Figure setup #
@@ -422,6 +480,8 @@ tde_checkbox_1.js_on_change("active", tde_checkbox_callback_1)
 ###############################
 # Placing controls for folder 1
 grid_layout[0:1, 0] = pn.Column(
+    pn.pane.Bokeh(button),
+    pn.pane.Bokeh(div),
     pn.pane.Bokeh(folder_label_1),
     pn.pane.Bokeh(loc_checkbox_1),
     pn.pane.Bokeh(obs_vel_checkbox_1),
