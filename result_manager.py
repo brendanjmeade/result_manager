@@ -14,6 +14,7 @@ from bokeh.models import (
     ResetTool,
     PanTool,
     Div,
+    Button,
     MultiLine,
     Patches,
     ColorBar,
@@ -22,6 +23,48 @@ from bokeh.models import (
 from bokeh.palettes import brewer
 
 pn.extension()
+
+##########################
+# START: Get folder name #
+##########################
+
+
+# Step 1: Create a Bokeh button
+load_folder_button_1 = Button(label="Select a Folder", button_type="success")
+
+# Step 2: Create a Div to display the selected folder name
+load_folder_text_1 = Div(text="NA", width=100, height=10)
+
+# Step 3: JavaScript code to create a hidden folder input and handle the folder selection
+load_folder_button_callback_1 = CustomJS(
+    args=dict(load_folder_text_1=load_folder_text_1),
+    code="""
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.webkitdirectory = true;
+    input.onchange = function() {
+        var files = input.files;
+        if (files.length > 0) {
+            // Extract the folder path from the first selected file
+            var path = files[0].webkitRelativePath;
+            var folderName = path.split('/')[0];
+            load_folder_text_1.text = folderName;
+        } else {
+            load_folder_text_1.text = 'NA';
+        }
+    };
+    input.click();
+""",
+)
+
+# Step 4: Attach the callback to the button
+load_folder_button_1.js_on_event("button_click", load_folder_button_callback_1)
+
+##########################
+# END: Get folder name #
+##########################
+
+
 
 
 # Set up data set
@@ -321,6 +364,8 @@ tde_checkbox_1.js_on_change("active", tde_checkbox_callback_1)
 ###############################
 # Placing controls for folder 1
 grid_layout[0:1, 0] = pn.Column(
+    pn.pane.Bokeh(load_folder_button_1),
+    pn.pane.Bokeh(load_folder_text_1),
     pn.pane.Bokeh(folder_label_1),
     pn.pane.Bokeh(loc_checkbox_1),
     pn.pane.Bokeh(obs_vel_checkbox_1),
@@ -354,7 +399,7 @@ grid_layout[0:1, 1] = pn.Column(
     pn.pane.Bokeh(mog_vel_checkbox_2),
 )
 
-grid_layout[4, 0:1] = pn.Column(
+grid_layout[5, 0:1] = pn.Column(
     pn.pane.Bokeh(velocity_scaler),
 )
 
