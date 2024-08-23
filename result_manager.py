@@ -1,6 +1,7 @@
 import scipy
 import panel as pn
 import pandas as pd
+import numpy as np
 
 from bokeh.plotting import figure
 from bokeh.models import (
@@ -13,14 +14,24 @@ from bokeh.models import (
     ResetTool,
     PanTool,
     Div,
+    MultiLine,
+    Patches,
+    ColorBar,
+    LinearColorMapper,
 )
+from bokeh.palettes import brewer
 
 pn.extension()
 
 
 # Set up data set
-station_file_1 = "model_station.csv"
+dir1 = "0000000343"
+station_file_1 = dir1 + "/model_station.csv"
 station = pd.read_csv(station_file_1)
+segment_file_1 = dir1 + "/model_segment.csv"
+segment = pd.read_csv(segment_file_1)
+mesh_file_1 = dir1 + "/model_meshes.csv"
+meshes = pd.read_csv(mesh_file_1)
 
 
 def get_coastlines():
@@ -32,6 +43,9 @@ def get_coastlines():
 
 COASTLINES = get_coastlines()
 
+################
+# Data sources #
+################
 
 VELOCITY_SCALE = 0.01
 source = ColumnDataSource(
@@ -47,6 +61,22 @@ source = ColumnDataSource(
         "mod_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel,
         "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
     }
+)
+
+# Source for block bounding segments. Dict of length n_segments
+segsource = ColumnDataSource(
+    dict(
+        xseg=[
+            np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
+            for i in range(len(segment))
+        ],
+        yseg=[
+            np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
+            for i in range(len(segment))
+        ],
+        sscolor=list(segment["model_strike_slip_rate"]),
+        dscolor=list(segment["model_dip_slip_rate"]),
+    ),
 )
 
 ################
@@ -70,6 +100,8 @@ fig.add_layout(LinearAxis(), "right")  # Add axis on the right
 # Grid layout
 grid_layout = pn.GridSpec(sizing_mode="stretch_both", max_height=600)
 
+# Slip rate color mapper
+slip_color_mapper = LinearColorMapper(palette=brewer["RdBu"][11], low=-100, high=100)
 
 ##############
 # UI objects #
@@ -88,6 +120,16 @@ tri_vel_checkbox_1 = CheckboxGroup(labels=["tri"], active=[])
 str_vel_checkbox_1 = CheckboxGroup(labels=["str"], active=[])
 mog_vel_checkbox_1 = CheckboxGroup(labels=["mog"], active=[])
 
+ss_text_checkbox_1 = CheckboxGroup(labels=["ss"], active=[])
+ds_text_checkbox_1 = CheckboxGroup(labels=["ds"], active=[])
+ss_color_checkbox_1 = CheckboxGroup(labels=["ss"], active=[])
+ds_color_checkbox_1 = CheckboxGroup(labels=["ds"], active=[])
+
+seg_text_checkbox_1 = CheckboxGroup(labels=["slip"], active=[])
+seg_color_checkbox_1 = CheckboxGroup(labels=["slip"], active=[])
+tde_checkbox_1 = CheckboxGroup(labels=["tde"], active=[])
+
+
 # Folder 2 controls
 folder_name_2 = "0000000293"
 folder_label_2 = Div(text="folder_2: 0000000293")
@@ -101,6 +143,11 @@ seg_vel_checkbox_2 = CheckboxGroup(labels=["seg"], active=[])
 tri_vel_checkbox_2 = CheckboxGroup(labels=["tri"], active=[])
 str_vel_checkbox_2 = CheckboxGroup(labels=["str"], active=[])
 mog_vel_checkbox_2 = CheckboxGroup(labels=["mog"], active=[])
+
+seg_text_checkbox_2 = CheckboxGroup(labels=["slip"], active=[])
+seg_color_checkbox_2 = CheckboxGroup(labels=["slip"], active=[])
+tde_checkbox_2 = CheckboxGroup(labels=["tde"], active=[])
+
 
 # Other controls
 velocity_scaler = Slider(
@@ -138,6 +185,7 @@ obs_vel_obj_1 = fig.segment(
     visible=False,
 )
 
+# Folder 1: modeled velocities
 mod_vel_obj_1 = fig.segment(
     "lon",
     "lat",
@@ -147,6 +195,16 @@ mod_vel_obj_1 = fig.segment(
     line_width=1,
     color="red",
     alpha=0.5,
+    visible=False,
+)
+
+# Folder 1: Colored line rates
+seg_color_obj_1 = fig.multi_line(
+    xs="xseg",
+    ys="yseg",
+    line_color={"field": "sscolor", "transform": slip_color_mapper},
+    source=segsource,
+    line_width=4,
     visible=False,
 )
 
@@ -176,6 +234,12 @@ mod_vel_checkbox_callback_1 = CustomJS(
 """,
 )
 
+seg_color_checkbox_callback_1 = CustomJS(
+    args={"segment": seg_color_obj_1},
+    code="""
+    segment.visible = cb_obj.active.includes(0);
+""",
+)
 
 # JavaScript callback for velocity magnitude scaling
 velocity_scaler_callback = CustomJS(
@@ -217,7 +281,7 @@ loc_checkbox_1.js_on_change("active", loc_checkbox_callback_1)
 obs_vel_checkbox_1.js_on_change("active", obs_vel_checkbox_callback_1)
 mod_vel_checkbox_1.js_on_change("active", mod_vel_checkbox_callback_1)
 velocity_scaler.js_on_change("value", velocity_scaler_callback)
-
+seg_color_checkbox_1.js_on_change("active", seg_color_checkbox_callback_1)
 
 ##############################
 # Place objects on panel grid #
@@ -235,7 +299,11 @@ grid_layout[0:1, 0] = pn.Column(
     pn.pane.Bokeh(str_vel_checkbox_1),
     pn.pane.Bokeh(mog_vel_checkbox_1),
 )
+grid_layout[7:8, 0] = pn.Column(
+    pn.pane.Bokeh(seg_color_checkbox_1),
+)
 
+# Placing controls for folder 2
 grid_layout[0:1, 1] = pn.Column(
     pn.pane.Bokeh(folder_label_2),
     pn.pane.Bokeh(loc_checkbox_2),
