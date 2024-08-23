@@ -1,0 +1,9 @@
+name: result_manager
+channels:
+  - conda-forge
+dependencies:
+  - numpy
+  - scipy
+  - pandas
+  - panel
+  - bokeh
