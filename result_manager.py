@@ -19,7 +19,7 @@ pn.extension()
 
 
 # Set up data set
-station_file_1 = "/Users/meade/Desktop/bokeh/model_station.csv"
+station_file_1 = "model_station.csv"
 station = pd.read_csv(station_file_1)
 
 
