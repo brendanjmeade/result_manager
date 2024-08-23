@@ -65,8 +65,6 @@ load_folder_button_1.js_on_event("button_click", load_folder_button_callback_1)
 ##########################
 
 
-
-
 # Set up data set
 dir1 = "0000000343"
 station_file_1 = dir1 + "/model_station.csv"
@@ -388,10 +386,8 @@ grid_layout[0:1, 0] = pn.Column(
     pn.pane.Bokeh(str_vel_checkbox_1),
     pn.pane.Bokeh(mog_vel_checkbox_1),
 )
-grid_layout[5, 0] = pn.Column(
-    pn.pane.Bokeh(seg_color_checkbox_1),
-)
 grid_layout[6, 0] = pn.Column(
+    pn.pane.Bokeh(seg_color_checkbox_1),
     pn.pane.Bokeh(tde_checkbox_1),
 )
 
