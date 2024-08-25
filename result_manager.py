@@ -7,6 +7,7 @@ from bokeh.plotting import figure
 from bokeh.models import (
     Slider,
     CheckboxGroup,
+    RadioButtonGroup,
     CustomJS,
     ColumnDataSource,
     LinearAxis,
@@ -115,23 +116,25 @@ segsource = ColumnDataSource(
             np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
             for i in range(len(segment))
         ],
-        sscolor=list(segment["model_strike_slip_rate"]),
-        dscolor=list(segment["model_dip_slip_rate"]),
+        ssrate=list(segment["model_strike_slip_rate"]),
+        dsrate=list(segment["model_dip_slip_rate"]),
+        active_comp=list(segment["model_strike_slip_rate"]),
     ),
 )
 
 tdesource = ColumnDataSource(
     dict(
-        xtri=[
+        xseg=[
             np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
             for j in range(len(meshes.lon1))
         ],
-        ytri=[
+        yseg=[
             np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
             for j in range(len(meshes.lon1))
         ],
-        sstri=list(meshes["strike_slip_rate"]),
-        dstri=list(meshes["dip_slip_rate"]),
+        ssrate=list(meshes["strike_slip_rate"]),
+        dsrate=list(meshes["dip_slip_rate"]),
+        active_comp=list(meshes["strike_slip_rate"]),
     ),
 )
 
@@ -182,8 +185,11 @@ ss_color_checkbox_1 = CheckboxGroup(labels=["ss"], active=[])
 ds_color_checkbox_1 = CheckboxGroup(labels=["ds"], active=[])
 
 seg_text_checkbox_1 = CheckboxGroup(labels=["slip"], active=[])
+seg_text_radio_1 = RadioButtonGroup(labels=["ss", "ds"], active=0)
 seg_color_checkbox_1 = CheckboxGroup(labels=["slip"], active=[])
+seg_color_radio_1 = RadioButtonGroup(labels=["ss", "ds"], active=0)
 tde_checkbox_1 = CheckboxGroup(labels=["tde"], active=[])
+tde_radio_1 = RadioButtonGroup(labels=["ss", "ds"], active=0)
 
 
 # Folder 2 controls
@@ -218,32 +224,33 @@ velocity_scaler = Slider(
 # Folder 1: TDE slip rates
 # Plotting these first so that coastlines, segments, and stations lie above
 tde_obj_1 = fig.patches(
-    xs="xtri",
-    ys="ytri",
+    xs="xseg",
+    ys="yseg",
     source=tdesource,
-    fill_color={"field": "sstri", "transform": slip_color_mapper},
+    fill_color={"field": "active_comp", "transform": slip_color_mapper},
     line_width=0,
     visible=False,
 )
 
-# Folder 1: Static segments. Always shown
+
+# Folder 1: Colored line rates
 seg_color_obj_1 = fig.multi_line(
+    xs="xseg",
+    ys="yseg",
+    line_color={"field": "active_comp", "transform": slip_color_mapper},
+    source=segsource,
+    line_width=4,
+    visible=False,
+)
+
+# Folder 1: Static segments. Always shown
+seg_obj_1 = fig.multi_line(
     xs="xseg",
     ys="yseg",
     line_color="blue",
     source=segsource,
     line_width=1,
     visible=True,
-)
-
-# Folder 1: Colored line rates
-seg_color_obj_1 = fig.multi_line(
-    xs="xseg",
-    ys="yseg",
-    line_color={"field": "sscolor", "transform": slip_color_mapper},
-    source=segsource,
-    line_width=4,
-    visible=False,
 )
 
 # Coastlines
@@ -357,6 +364,24 @@ velocity_scaler_callback = CustomJS(
 """,
 )
 
+slip_component_callback_js = """
+    const radio_value = cb_obj.active;
+    const xseg = source.data.xseg
+    const yseg = source.data.yseg
+    const ssrate = source.data.ssrate
+    const dsrate = source.data.dsrate  
+    let active_comp = []                    
+    for (let i = 0; i < dsrate.length; i++) {
+        if(radio_value ==0) {
+            active_comp[i] = ssrate[i];
+        } else {
+            active_comp[i] = dsrate[i];
+        }
+    }
+   //source.change.emit();
+   source.data = { xseg, yseg, ssrate, dsrate, active_comp}
+"""
+
 
 ###################################
 # Attach the callbacks to handles #
@@ -366,7 +391,13 @@ obs_vel_checkbox_1.js_on_change("active", obs_vel_checkbox_callback_1)
 mod_vel_checkbox_1.js_on_change("active", mod_vel_checkbox_callback_1)
 velocity_scaler.js_on_change("value", velocity_scaler_callback)
 seg_color_checkbox_1.js_on_change("active", seg_color_checkbox_callback_1)
+seg_color_radio_1.js_on_change(
+    "active", CustomJS(args=dict(source=segsource), code=slip_component_callback_js)
+)
 tde_checkbox_1.js_on_change("active", tde_checkbox_callback_1)
+tde_radio_1.js_on_change(
+    "active", CustomJS(args=dict(source=tdesource), code=slip_component_callback_js)
+)
 
 ##############################
 # Place objects on panel grid #
@@ -388,7 +419,9 @@ grid_layout[0:1, 0] = pn.Column(
 )
 grid_layout[6, 0] = pn.Column(
     pn.pane.Bokeh(seg_color_checkbox_1),
+    pn.pane.Bokeh(seg_color_radio_1),
     pn.pane.Bokeh(tde_checkbox_1),
+    pn.pane.Bokeh(tde_radio_1),
 )
 
 
