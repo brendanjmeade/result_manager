@@ -22,6 +22,7 @@ from bokeh.models import (
     LinearColorMapper,
 )
 from bokeh.palettes import brewer
+from bokeh.colors import RGB
 
 pn.extension()
 
@@ -102,6 +103,39 @@ source = ColumnDataSource(
         "mod_north_vel": station.model_north_vel,
         "mod_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel,
         "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
+        "res_east_vel": station.model_east_vel_residual,
+        "res_north_vel": station.model_north_vel_residual,
+        "res_east_vel_lon": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_residual,
+        "res_north_vel_lat": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_residual,
+        "rot_east_vel": station.model_east_vel_rotation,
+        "rot_north_vel": station.model_north_vel_rotation,
+        "rot_east_vel_lon": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_rotation,
+        "rot_north_vel_lat": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_rotation,
+        "seg_east_vel": station.model_east_elastic_segment,
+        "seg_north_vel": station.model_north_elastic_segment,
+        "seg_east_vel_lon": station.lon
+        + VELOCITY_SCALE * station.model_east_elastic_segment,
+        "seg_north_vel_lat": station.lat
+        + VELOCITY_SCALE * station.model_north_elastic_segment,
+        "tde_east_vel": station.model_east_vel_tde,
+        "tde_north_vel": station.model_north_vel_tde,
+        "tde_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel_tde,
+        "tde_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel_tde,
+        "str_east_vel": station.model_east_vel_block_strain_rate,
+        "str_north_vel": station.model_north_vel_block_strain_rate,
+        "str_east_vel_lon": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_block_strain_rate,
+        "str_north_vel_lat": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_block_strain_rate,
+        "mog_east_vel": station.model_east_vel_mogi,
+        "mog_north_vel": station.model_north_vel_mogi,
+        "mog_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel_mogi,
+        "mog_north_vel_lat": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_mogi,
     }
 )
 
@@ -175,7 +209,7 @@ mod_vel_checkbox_1 = CheckboxGroup(labels=["mod"], active=[])
 res_vel_checkbox_1 = CheckboxGroup(labels=["res"], active=[])
 rot_vel_checkbox_1 = CheckboxGroup(labels=["rot"], active=[])
 seg_vel_checkbox_1 = CheckboxGroup(labels=["seg"], active=[])
-tri_vel_checkbox_1 = CheckboxGroup(labels=["tri"], active=[])
+tde_vel_checkbox_1 = CheckboxGroup(labels=["tri"], active=[])
 str_vel_checkbox_1 = CheckboxGroup(labels=["str"], active=[])
 mog_vel_checkbox_1 = CheckboxGroup(labels=["mog"], active=[])
 
@@ -202,7 +236,7 @@ mod_vel_checkbox_2 = CheckboxGroup(labels=["mod"], active=[])
 res_vel_checkbox_2 = CheckboxGroup(labels=["res"], active=[])
 rot_vel_checkbox_2 = CheckboxGroup(labels=["rot"], active=[])
 seg_vel_checkbox_2 = CheckboxGroup(labels=["seg"], active=[])
-tri_vel_checkbox_2 = CheckboxGroup(labels=["tri"], active=[])
+tde_vel_checkbox_2 = CheckboxGroup(labels=["tri"], active=[])
 str_vel_checkbox_2 = CheckboxGroup(labels=["str"], active=[])
 mog_vel_checkbox_2 = CheckboxGroup(labels=["mog"], active=[])
 
@@ -221,6 +255,15 @@ velocity_scaler = Slider(
 # Map objects #
 ###############
 
+# Velocity colors
+obs_color = RGB(r=0, g=0, b=256)
+mod_color = RGB(r=256, g=0, b=0)
+res_color = RGB(r=256, g=0, b=256)
+rot_color = RGB(r=0, g=256, b=0)
+seg_color = RGB(r=0, g=256, b=256)
+tde_color = RGB(r=256, g=166, b=0)
+str_color = RGB(r=0, g=128, b=128)
+
 # Folder 1: TDE slip rates
 # Plotting these first so that coastlines, segments, and stations lie above
 tde_obj_1 = fig.patches(
@@ -232,6 +275,15 @@ tde_obj_1 = fig.patches(
     visible=False,
 )
 
+# Folder 1: Static segments. Always shown
+seg_obj_1 = fig.multi_line(
+    xs="xseg",
+    ys="yseg",
+    line_color="blue",
+    source=segsource,
+    line_width=1,
+    visible=True,
+)
 
 # Folder 1: Colored line rates
 seg_color_obj_1 = fig.multi_line(
@@ -241,16 +293,6 @@ seg_color_obj_1 = fig.multi_line(
     source=segsource,
     line_width=4,
     visible=False,
-)
-
-# Folder 1: Static segments. Always shown
-seg_obj_1 = fig.multi_line(
-    xs="xseg",
-    ys="yseg",
-    line_color="blue",
-    source=segsource,
-    line_width=1,
-    visible=True,
 )
 
 # Coastlines
@@ -274,7 +316,7 @@ obs_vel_obj_1 = fig.segment(
     "obs_north_vel_lat",
     source=source,
     line_width=1,
-    color="blue",
+    color=obs_color,
     alpha=0.5,
     visible=False,
 )
@@ -287,16 +329,94 @@ mod_vel_obj_1 = fig.segment(
     "mod_north_vel_lat",
     source=source,
     line_width=1,
-    color="red",
+    color=mod_color,
     alpha=0.5,
     visible=False,
 )
 
+# Folder 1: residual velocities
+res_vel_obj_1 = fig.segment(
+    "lon",
+    "lat",
+    "res_east_vel_lon",
+    "res_north_vel_lat",
+    source=source,
+    line_width=1,
+    color=res_color,
+    visible=False,
+)
+
+# Folder 1: rotation velocities
+rot_vel_obj_1 = fig.segment(
+    "lon",
+    "lat",
+    "rot_east_vel_lon",
+    "rot_north_vel_lat",
+    source=source,
+    line_width=1,
+    color=rot_color,
+    visible=False,
+)
+
+# Folder 1: elastic velocities
+seg_vel_obj_1 = fig.segment(
+    "lon",
+    "lat",
+    "seg_east_vel_lon",
+    "seg_north_vel_lat",
+    source=source,
+    line_width=1,
+    color=seg_color,
+    visible=False,
+)
+
+# Folder 1: tde velocities
+tde_vel_obj_1 = fig.segment(
+    "lon",
+    "lat",
+    "tde_east_vel_lon",
+    "tde_north_vel_lat",
+    source=source,
+    line_width=1,
+    color=tde_color,
+    alpha=0.5,
+    visible=False,
+)
+
+# Folder 1: strain velocities
+str_vel_obj_1 = fig.segment(
+    "lon",
+    "lat",
+    "str_east_vel_lon",
+    "str_north_vel_lat",
+    source=source,
+    line_width=1,
+    color=str_color,
+    alpha=0.5,
+    visible=False,
+)
+
+# Folder 1: mogi velocities
+mog_vel_obj_1 = fig.segment(
+    "lon",
+    "lat",
+    "mog_east_vel_lon",
+    "mog_north_vel_lat",
+    source=source,
+    line_width=1,
+    color=str_color,
+    alpha=0.5,
+    visible=False,
+)
 
 #############
 # Callbacks #
 #############
 # Define JavaScript callbacks to toggle visibility
+checkbox_callback_js = """
+    plot_object.visible = cb_obj.active.includes(0);
+"""
+
 loc_checkbox_callback_1 = CustomJS(
     args={"scatter": loc_obj_1},
     code="""
@@ -341,26 +461,63 @@ velocity_scaler_callback = CustomJS(
     const velocity_scale_slider = velocity_scaler.value
     const lon = source.data.lon
     const lat = source.data.lat
-    const obs_east_vel = source.data.obs_east_vel
+    const obs_east_vel =  source.data.obs_east_vel
     const obs_north_vel = source.data.obs_north_vel
-    const mod_east_vel = source.data.mod_east_vel
+    const mod_east_vel =  source.data.mod_east_vel
     const mod_north_vel = source.data.mod_north_vel
-
+    const res_east_vel =  source.data.res_east_vel
+    const res_north_vel = source.data.res_north_vel
+    const rot_east_vel =  source.data.rot_east_vel
+    const rot_north_vel = source.data.rot_north_vel
+    const seg_east_vel =  source.data.seg_east_vel
+    const seg_north_vel = source.data.seg_north_vel
+    const tde_east_vel =  source.data.tde_east_vel
+    const tde_north_vel = source.data.tde_north_vel
+    const str_east_vel =  source.data.str_east_vel
+    const str_north_vel = source.data.str_north_vel
+    const mog_east_vel =  source.data.mog_east_vel
+    const mog_north_vel = source.data.mog_north_vel
+    
     // Update velocities with current magnitude scaling
     let obs_east_vel_lon = [];
     let obs_north_vel_lat = [];
     let mod_east_vel_lon = [];
     let mod_north_vel_lat = [];
+    let res_east_vel_lon = [];
+    let res_north_vel_lat = [];
+    let rot_east_vel_lon = [];
+    let rot_north_vel_lat = [];
+    let seg_east_vel_lon = [];
+    let seg_north_vel_lat = [];
+    let tde_east_vel_lon = [];
+    let tde_north_vel_lat = [];
+    let str_east_vel_lon = [];
+    let str_north_vel_lat = [];
+    let mog_east_vel_lon = [];
+    let mog_north_vel_lat = [];
     for (let i = 0; i < lon.length; i++) {
-        obs_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider * obs_east_vel[i]);
+        obs_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  obs_east_vel[i]);
         obs_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * obs_north_vel[i]);
-        mod_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider * mod_east_vel[i]);
+        mod_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  mod_east_vel[i]);
         mod_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * mod_north_vel[i]);
+        res_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  res_east_vel[i]);
+        res_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * res_north_vel[i]);
+        rot_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  rot_east_vel[i]);
+        rot_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * rot_north_vel[i]);
+        seg_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  seg_east_vel[i]);
+        seg_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * seg_north_vel[i]);
+        tde_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  tde_east_vel[i]);
+        tde_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * tde_north_vel[i]);
+        str_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  str_east_vel[i]);
+        str_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel[i]);
+        mog_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel[i]);
+        mog_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel[i]);
+    
     }
 
     // Package everthing back into dictionary
     // Try source.change.emit();???
-    source.data = { lon, lat, obs_east_vel, obs_north_vel, obs_east_vel_lon, obs_north_vel_lat, mod_east_vel, mod_north_vel, mod_east_vel_lon, mod_north_vel_lat }
+    source.data = { lon, lat, obs_east_vel, obs_north_vel, obs_east_vel_lon, obs_north_vel_lat, mod_east_vel, mod_north_vel, mod_east_vel_lon, mod_north_vel_lat, res_east_vel, res_north_vel, res_east_vel_lon, res_north_vel_lat, rot_east_vel, rot_north_vel, rot_east_vel_lon, rot_north_vel_lat, seg_east_vel, seg_north_vel, seg_east_vel_lon, seg_north_vel_lat, tde_east_vel, tde_north_vel, tde_east_vel_lon, tde_north_vel_lat, str_east_vel, str_north_vel, str_east_vel_lon, str_north_vel_lat, mog_east_vel, mog_north_vel, mog_east_vel_lon, mog_north_vel_lat}
 """,
 )
 
@@ -386,9 +543,37 @@ slip_component_callback_js = """
 ###################################
 # Attach the callbacks to handles #
 ###################################
-loc_checkbox_1.js_on_change("active", loc_checkbox_callback_1)
-obs_vel_checkbox_1.js_on_change("active", obs_vel_checkbox_callback_1)
-mod_vel_checkbox_1.js_on_change("active", mod_vel_checkbox_callback_1)
+loc_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": loc_obj_1}, code=checkbox_callback_js)
+)
+obs_vel_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": obs_vel_obj_1}, code=checkbox_callback_js)
+)
+mod_vel_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": mod_vel_obj_1}, code=checkbox_callback_js)
+)
+res_vel_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": res_vel_obj_1}, code=checkbox_callback_js)
+)
+rot_vel_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": rot_vel_obj_1}, code=checkbox_callback_js)
+)
+seg_vel_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": seg_vel_obj_1}, code=checkbox_callback_js)
+)
+tde_vel_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": tde_vel_obj_1}, code=checkbox_callback_js)
+)
+str_vel_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": str_vel_obj_1}, code=checkbox_callback_js)
+)
+mog_vel_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": mog_vel_obj_1}, code=checkbox_callback_js)
+)
+# loc_checkbox_1.js_on_change("active", loc_checkbox_callback_1)
+# obs_vel_checkbox_1.js_on_change("active", obs_vel_checkbox_callback_1)
+# mod_vel_checkbox_1.js_on_change("active", mod_vel_checkbox_callback_1)
+
 velocity_scaler.js_on_change("value", velocity_scaler_callback)
 seg_color_checkbox_1.js_on_change("active", seg_color_checkbox_callback_1)
 seg_color_radio_1.js_on_change(
@@ -413,7 +598,7 @@ grid_layout[0:1, 0] = pn.Column(
     pn.pane.Bokeh(res_vel_checkbox_1),
     pn.pane.Bokeh(rot_vel_checkbox_1),
     pn.pane.Bokeh(seg_vel_checkbox_1),
-    pn.pane.Bokeh(tri_vel_checkbox_1),
+    pn.pane.Bokeh(tde_vel_checkbox_1),
     pn.pane.Bokeh(str_vel_checkbox_1),
     pn.pane.Bokeh(mog_vel_checkbox_1),
 )
@@ -434,7 +619,7 @@ grid_layout[0:1, 1] = pn.Column(
     pn.pane.Bokeh(res_vel_checkbox_2),
     pn.pane.Bokeh(rot_vel_checkbox_2),
     pn.pane.Bokeh(seg_vel_checkbox_2),
-    pn.pane.Bokeh(tri_vel_checkbox_2),
+    pn.pane.Bokeh(tde_vel_checkbox_2),
     pn.pane.Bokeh(str_vel_checkbox_2),
     pn.pane.Bokeh(mog_vel_checkbox_2),
 )
