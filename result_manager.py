@@ -73,7 +73,8 @@ tdesource = ColumnDataSource(
 # START: Load data from button #
 ################################
 
-button = Button(label="Load Data", button_type="success")
+folder_load_button_1 = Button(label="Load", button_type="success")
+folder_label_1 = Div(text="empty")
 
 # Define the load_data callback function
 def load_data():
@@ -84,12 +85,13 @@ def load_data():
         title="load", initialdir="/Users/meade/Desktop/result_manager"
     )
 
-    station_file_path = folder_name + "/model_station.csv"
-    station = pd.read_csv(station_file_path)
-    segment_file_path = folder_name + "/model_segment.csv"
-    segment = pd.read_csv(segment_file_path)
-    meshes_file_path = folder_name + "/model_meshes.csv"
-    meshes = pd.read_csv(meshes_file_path)
+    # Set display of folder name
+    folder_label_1.text = folder_name.split("/")[-1]
+
+    # Read model out put as dataframes
+    station = pd.read_csv(folder_name + "/model_station.csv")
+    segment = pd.read_csv(folder_name + "/model_segment.csv")
+    meshes = pd.read_csv(folder_name + "/model_meshes.csv")
 
     source.data = {
         "lon": station.lon,
@@ -135,7 +137,7 @@ def load_data():
 
 
 # Link the callback function to the button
-button.on_click(load_data)
+folder_load_button_1.on_click(load_data)
 
 ##############################
 # END: Load data from button #
@@ -166,7 +168,6 @@ fig.ygrid.visible = False
 fig.add_layout(LinearAxis(), "above")  # Add axis on the top
 fig.add_layout(LinearAxis(), "right")  # Add axis on the right
 
-
 # Grid layout
 grid_layout = pn.GridSpec(sizing_mode="stretch_both", max_height=600)
 
@@ -178,7 +179,7 @@ slip_color_mapper = LinearColorMapper(palette=brewer["RdBu"][11], low=-100, high
 ##############
 # Folder 1 controls
 folder_name_1 = "0000000292"
-folder_label_1 = Div(text="folder_1: 0000000292")
+# folder_label_1 = Div(text="folder_1: 0000000292")
 loc_checkbox_1 = CheckboxGroup(labels=["locs"], active=[])
 name_checkbox_1 = CheckboxGroup(labels=["name"], active=[])
 obs_vel_checkbox_1 = CheckboxGroup(labels=["obs"], active=[])
@@ -416,7 +417,8 @@ tde_radio_1.js_on_change(
 ###############################
 # Placing controls for folder 1
 grid_layout[0:1, 0] = pn.Column(
-    pn.pane.Bokeh(button),
+    # pn.pane.Bokeh(button),
+    pn.pane.Bokeh(folder_load_button_1),
     # pn.pane.Bokeh(load_folder_text_1),
     pn.pane.Bokeh(folder_label_1),
     pn.pane.Bokeh(loc_checkbox_1),
@@ -429,13 +431,13 @@ grid_layout[0:1, 0] = pn.Column(
     pn.pane.Bokeh(str_vel_checkbox_1),
     pn.pane.Bokeh(mog_vel_checkbox_1),
 )
+
 grid_layout[6, 0] = pn.Column(
     pn.pane.Bokeh(seg_color_checkbox_1),
     pn.pane.Bokeh(seg_color_radio_1),
     pn.pane.Bokeh(tde_checkbox_1),
     pn.pane.Bokeh(tde_radio_1),
 )
-
 
 # Placing controls for folder 2
 grid_layout[0:1, 1] = pn.Column(
