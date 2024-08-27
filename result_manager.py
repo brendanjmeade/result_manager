@@ -2,6 +2,8 @@ import scipy
 import panel as pn
 import pandas as pd
 import numpy as np
+import tkinter as tk
+from tkinter import filedialog
 
 from bokeh.plotting import figure
 from bokeh.models import (
@@ -25,41 +27,85 @@ from bokeh.palettes import brewer
 
 pn.extension()
 
+VELOCITY_SCALE = 0.01
+
+# Declare empty ColumnDataStores
+source = ColumnDataSource(
+    data={
+        "lon": [],
+        "lat": [],
+        "obs_east_vel": [],
+        "obs_north_vel": [],
+        "obs_east_vel_lon": [],
+        "obs_north_vel_lat": [],
+        "mod_east_vel": [],
+        "mod_north_vel": [],
+        "mod_east_vel_lon": [],
+        "mod_north_vel_lat": [],
+    }
+)
+
+# Source for block bounding segments. Dict of length n_segments
+segsource = ColumnDataSource(
+    dict(
+        xseg=[],
+        yseg=[],
+        ssrate=[],
+        dsrate=[],
+        active_comp=[],
+    ),
+)
+
+tdesource = ColumnDataSource(
+    dict(
+        xseg=[],
+        yseg=[],
+        ssrate=[],
+        dsrate=[],
+        active_comp=[],
+    ),
+)
+
+
 ##########################
 # START: Get folder name #
 ##########################
 
+button = Button(label="Load Data", button_type="success")
 
-# Step 1: Create a Bokeh button
-load_folder_button_1 = Button(label="Select a Folder", button_type="success")
 
-# Step 2: Create a Div to display the selected folder name
-load_folder_text_1 = Div(text="NA", width=100, height=10)
+def select_folder():
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+    foldername = filedialog.askdirectory(
+        title="load", initialdir="/Users/meade/Desktop/result_manager"
+    )
+    return foldername
 
-# Step 3: JavaScript code to create a hidden folder input and handle the folder selection
-load_folder_button_callback_1 = CustomJS(
-    args=dict(load_folder_text_1=load_folder_text_1),
-    code="""
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.webkitdirectory = true;
-    input.onchange = function() {
-        var files = input.files;
-        if (files.length > 0) {
-            // Extract the folder path from the first selected file
-            var path = files[0].webkitRelativePath;
-            var folderName = path.split('/')[0];
-            load_folder_text_1.text = folderName;
-        } else {
-            load_folder_text_1.text = 'NA';
-        }
-    };
-    input.click();
-""",
-)
 
-# Step 4: Attach the callback to the button
-load_folder_button_1.js_on_event("button_click", load_folder_button_callback_1)
+# Define the callback function
+def load_data():
+    # Step 1: Read data from a local file
+    foldername = select_folder()
+    file_path = foldername + "/model_station.csv"
+    station = pd.read_csv(file_path)
+
+    source.data = {
+        "lon": station.lon,
+        "lat": station.lat,
+        "obs_east_vel": station.east_vel,
+        "obs_north_vel": station.north_vel,
+        "obs_east_vel_lon": station.lon + VELOCITY_SCALE * station.east_vel,
+        "obs_north_vel_lat": station.lat + VELOCITY_SCALE * station.north_vel,
+        "mod_east_vel": station.model_east_vel,
+        "mod_north_vel": station.model_north_vel,
+        "mod_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel,
+        "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
+    }
+
+
+# Link the callback function to the button
+button.on_click(load_data)
 
 ##########################
 # END: Get folder name #
@@ -89,54 +135,54 @@ COASTLINES = get_coastlines()
 # Data sources #
 ################
 
-VELOCITY_SCALE = 0.01
-source = ColumnDataSource(
-    data={
-        "lon": station.lon,
-        "lat": station.lat,
-        "obs_east_vel": station.east_vel,
-        "obs_north_vel": station.north_vel,
-        "obs_east_vel_lon": station.lon + VELOCITY_SCALE * station.east_vel,
-        "obs_north_vel_lat": station.lat + VELOCITY_SCALE * station.north_vel,
-        "mod_east_vel": station.model_east_vel,
-        "mod_north_vel": station.model_north_vel,
-        "mod_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel,
-        "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
-    }
-)
+# VELOCITY_SCALE = 0.01
+# source = ColumnDataSource(
+#     data={
+#         "lon": station.lon,
+#         "lat": station.lat,
+#         "obs_east_vel": station.east_vel,
+#         "obs_north_vel": station.north_vel,
+#         "obs_east_vel_lon": station.lon + VELOCITY_SCALE * station.east_vel,
+#         "obs_north_vel_lat": station.lat + VELOCITY_SCALE * station.north_vel,
+#         "mod_east_vel": station.model_east_vel,
+#         "mod_north_vel": station.model_north_vel,
+#         "mod_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel,
+#         "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
+#     }
+# )
 
-# Source for block bounding segments. Dict of length n_segments
-segsource = ColumnDataSource(
-    dict(
-        xseg=[
-            np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
-            for i in range(len(segment))
-        ],
-        yseg=[
-            np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
-            for i in range(len(segment))
-        ],
-        ssrate=list(segment["model_strike_slip_rate"]),
-        dsrate=list(segment["model_dip_slip_rate"]),
-        active_comp=list(segment["model_strike_slip_rate"]),
-    ),
-)
+# # Source for block bounding segments. Dict of length n_segments
+# segsource = ColumnDataSource(
+#     dict(
+#         xseg=[
+#             np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
+#             for i in range(len(segment))
+#         ],
+#         yseg=[
+#             np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
+#             for i in range(len(segment))
+#         ],
+#         ssrate=list(segment["model_strike_slip_rate"]),
+#         dsrate=list(segment["model_dip_slip_rate"]),
+#         active_comp=list(segment["model_strike_slip_rate"]),
+#     ),
+# )
 
-tdesource = ColumnDataSource(
-    dict(
-        xseg=[
-            np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
-            for j in range(len(meshes.lon1))
-        ],
-        yseg=[
-            np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
-            for j in range(len(meshes.lon1))
-        ],
-        ssrate=list(meshes["strike_slip_rate"]),
-        dsrate=list(meshes["dip_slip_rate"]),
-        active_comp=list(meshes["strike_slip_rate"]),
-    ),
-)
+# tdesource = ColumnDataSource(
+#     dict(
+#         xseg=[
+#             np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
+#             for j in range(len(meshes.lon1))
+#         ],
+#         yseg=[
+#             np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
+#             for j in range(len(meshes.lon1))
+#         ],
+#         ssrate=list(meshes["strike_slip_rate"]),
+#         dsrate=list(meshes["dip_slip_rate"]),
+#         active_comp=list(meshes["strike_slip_rate"]),
+#     ),
+# )
 
 ################
 # Figure setup #
@@ -404,8 +450,8 @@ tde_radio_1.js_on_change(
 ###############################
 # Placing controls for folder 1
 grid_layout[0:1, 0] = pn.Column(
-    pn.pane.Bokeh(load_folder_button_1),
-    pn.pane.Bokeh(load_folder_text_1),
+    pn.pane.Bokeh(button),
+    # pn.pane.Bokeh(load_folder_text_1),
     pn.pane.Bokeh(folder_label_1),
     pn.pane.Bokeh(loc_checkbox_1),
     pn.pane.Bokeh(obs_vel_checkbox_1),
