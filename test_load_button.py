@@ -8,22 +8,24 @@ from bokeh.models import ColumnDataSource, Button
 from bokeh.plotting import figure
 from bokeh.layouts import column
 
+VELOCITY_SCALE = 0.01
+
 # Initial empty ColumnDataSource
-source = ColumnDataSource(data=dict(lon=[], lat=[]))
-# source = ColumnDataSource(
-#     data={
-#         "lon": [],
-#         "lat": [],
-#         "obs_east_vel": [],
-#         "obs_north_vel": [],
-#         "obs_east_vel_lon": [],
-#         "obs_north_vel_lat": [],
-#         "mod_east_vel": [],
-#         "mod_north_vel": [],
-#         "mod_east_vel_lon": [],
-#         "mod_north_vel_lat": [],
-#     }
-# )
+# source = ColumnDataSource(data=dict(lon=[], lat=[]))
+source = ColumnDataSource(
+    data={
+        "lon": [],
+        "lat": [],
+        "obs_east_vel": [],
+        "obs_north_vel": [],
+        "obs_east_vel_lon": [],
+        "obs_north_vel_lat": [],
+        "mod_east_vel": [],
+        "mod_north_vel": [],
+        "mod_east_vel_lon": [],
+        "mod_north_vel_lat": [],
+    }
+)
 
 # Define the button
 button = Button(label="Load Data", button_type="success")
@@ -43,12 +45,20 @@ def load_data():
     # Step 1: Read data from a local file
     foldername = select_folder()
     file_path = foldername + "/model_station.csv"
-    data = pd.read_csv(file_path)
+    station = pd.read_csv(file_path)
 
-    # Step 2: Update the ColumnDataSource with new data
-    source.data = ColumnDataSource.from_df(
-        data
-    )  # Alternative: source.data = {'x': data['x'], 'y': data['y']}
+    source.data = {
+        "lon": station.lon,
+        "lat": station.lat,
+        "obs_east_vel": station.east_vel,
+        "obs_north_vel": station.north_vel,
+        "obs_east_vel_lon": station.lon + VELOCITY_SCALE * station.east_vel,
+        "obs_north_vel_lat": station.lat + VELOCITY_SCALE * station.north_vel,
+        "mod_east_vel": station.model_east_vel,
+        "mod_north_vel": station.model_north_vel,
+        "mod_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel,
+        "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
+    }
 
 
 # Link the callback function to the button
