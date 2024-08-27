@@ -398,13 +398,14 @@ velocity_scaler = Slider(
 ###############
 
 # Velocity colors
-obs_color = RGB(r=0, g=0, b=256)
-mod_color = RGB(r=256, g=0, b=0)
-res_color = RGB(r=256, g=0, b=256)
-rot_color = RGB(r=0, g=256, b=0)
-seg_color = RGB(r=0, g=256, b=256)
-tde_color = RGB(r=256, g=166, b=0)
-str_color = RGB(r=0, g=128, b=128)
+obs_color_1 = RGB(r=0, g=0, b=256)
+mod_color_1 = RGB(r=256, g=0, b=0)
+res_color_1 = RGB(r=256, g=0, b=256)
+rot_color_1 = RGB(r=0, g=256, b=0)
+seg_color_1 = RGB(r=0, g=256, b=256)
+tde_color_1 = RGB(r=256, g=166, b=0)
+str_color_1 = RGB(r=0, g=128, b=128)
+mog_color_1 = RGB(r=128, g=128, b=128)
 
 # Folder 1: TDE slip rates
 # Plotting these first so that coastlines, segments, and stations lie above
@@ -491,7 +492,7 @@ obs_vel_obj_1 = fig.segment(
     "obs_north_vel_lat",
     source=stasource_1,
     line_width=1,
-    color=obs_color,
+    color=obs_color_1,
     alpha=0.5,
     visible=False,
 )
@@ -504,7 +505,7 @@ mod_vel_obj_1 = fig.segment(
     "mod_north_vel_lat",
     source=stasource_1,
     line_width=1,
-    color=mod_color,
+    color=mod_color_1,
     alpha=0.5,
     visible=False,
 )
@@ -517,7 +518,7 @@ res_vel_obj_1 = fig.segment(
     "res_north_vel_lat",
     source=stasource_1,
     line_width=1,
-    color=res_color,
+    color=res_color_1,
     visible=False,
 )
 
@@ -529,7 +530,7 @@ rot_vel_obj_1 = fig.segment(
     "rot_north_vel_lat",
     source=stasource_1,
     line_width=1,
-    color=rot_color,
+    color=rot_color_1,
     visible=False,
 )
 
@@ -541,7 +542,7 @@ seg_vel_obj_1 = fig.segment(
     "seg_north_vel_lat",
     source=stasource_1,
     line_width=1,
-    color=seg_color,
+    color=seg_color_1,
     visible=False,
 )
 
@@ -553,7 +554,7 @@ tde_vel_obj_1 = fig.segment(
     "tde_north_vel_lat",
     source=stasource_1,
     line_width=1,
-    color=tde_color,
+    color=tde_color_1,
     alpha=0.5,
     visible=False,
 )
@@ -566,7 +567,7 @@ str_vel_obj_1 = fig.segment(
     "str_north_vel_lat",
     source=stasource_1,
     line_width=1,
-    color=str_color,
+    color=str_color_1,
     alpha=0.5,
     visible=False,
 )
@@ -579,7 +580,7 @@ mog_vel_obj_1 = fig.segment(
     "mog_north_vel_lat",
     source=stasource_1,
     line_width=1,
-    color=str_color,
+    color=mog_color_1,
     alpha=0.5,
     visible=False,
 )
@@ -589,13 +590,14 @@ mog_vel_obj_1 = fig.segment(
 ############
 
 # Velocity colors for folder 2
-obs_color = RGB(r=0, g=0, b=256)
-mod_color = RGB(r=256, g=0, b=0)
-res_color = RGB(r=256, g=0, b=256)
-rot_color = RGB(r=0, g=256, b=0)
-seg_color = RGB(r=0, g=256, b=256)
-tde_color = RGB(r=256, g=166, b=0)
-str_color = RGB(r=0, g=128, b=128)
+obs_color_2 = RGB(r=0, g=0, b=205)
+mod_color_2 = RGB(r=205, g=0, b=0)
+res_color_2 = RGB(r=205, g=0, b=205)
+rot_color_2 = RGB(r=0, g=205, b=0)
+seg_color_2 = RGB(r=0, g=205, b=205)
+tde_color_2 = RGB(r=205, g=133, b=0)
+str_color_2 = RGB(r=0, g=102, b=102)
+mog_color_2 = RGB(r=102, g=102, b=102)
 
 loc_obj_2 = fig.scatter(
     "lon", "lat", source=stasource_2, size=1, color="black", visible=False
@@ -609,7 +611,7 @@ obs_vel_obj_2 = fig.segment(
     "obs_north_vel_lat",
     source=stasource_2,
     line_width=1,
-    color=obs_color,
+    color=obs_color_2,
     alpha=0.5,
     visible=False,
 )
@@ -622,7 +624,7 @@ mod_vel_obj_2 = fig.segment(
     "mod_north_vel_lat",
     source=stasource_2,
     line_width=1,
-    color=mod_color,
+    color=mod_color_2,
     alpha=0.5,
     visible=False,
 )
@@ -635,7 +637,7 @@ res_vel_obj_2 = fig.segment(
     "res_north_vel_lat",
     source=stasource_2,
     line_width=1,
-    color=res_color,
+    color=res_color_2,
     visible=False,
 )
 
@@ -647,7 +649,7 @@ rot_vel_obj_2 = fig.segment(
     "rot_north_vel_lat",
     source=stasource_2,
     line_width=1,
-    color=rot_color,
+    color=rot_color_2,
     visible=False,
 )
 
@@ -659,7 +661,7 @@ seg_vel_obj_2 = fig.segment(
     "seg_north_vel_lat",
     source=stasource_2,
     line_width=1,
-    color=seg_color,
+    color=seg_color_2,
     visible=False,
 )
 
@@ -671,7 +673,7 @@ tde_vel_obj_2 = fig.segment(
     "tde_north_vel_lat",
     source=stasource_2,
     line_width=1,
-    color=tde_color,
+    color=tde_color_2,
     alpha=0.5,
     visible=False,
 )
@@ -684,7 +686,7 @@ str_vel_obj_2 = fig.segment(
     "str_north_vel_lat",
     source=stasource_2,
     line_width=1,
-    color=str_color,
+    color=str_color_2,
     alpha=0.5,
     visible=False,
 )
@@ -697,7 +699,7 @@ mog_vel_obj_2 = fig.segment(
     "mog_north_vel_lat",
     source=stasource_2,
     line_width=1,
-    color=str_color,
+    color=mog_color_2,
     alpha=0.5,
     visible=False,
 )
