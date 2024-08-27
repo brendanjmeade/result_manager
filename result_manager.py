@@ -2,6 +2,7 @@ import scipy
 import panel as pn
 import pandas as pd
 import numpy as np
+import copy
 import tkinter as tk
 from tkinter import filedialog
 
@@ -92,10 +93,10 @@ tdesource_1 = ColumnDataSource(
         "active_comp": [],
     },
 )
-
-stasource_2 = stasource_1
-segsource_2 = segsource_1
-tdesource_2 = tdesource_1
+# Make copies for folder 2
+stasource_2 = ColumnDataSource(stasource_1.data.copy())
+segsource_2 = ColumnDataSource(segsource_1.data.copy())
+tdesource_2 = ColumnDataSource(tdesource_1.data.copy())
 
 
 ################################
@@ -362,7 +363,7 @@ tde_radio_1 = RadioButtonGroup(labels=["ss", "ds"], active=0)
 
 # Folder 2 controls
 folder_name_2 = "0000000293"
-folder_label_2 = Div(text="folder_2: 0000000293")
+# folder_label_2 = Div(text="folder_2: 0000000293")
 loc_checkbox_2 = CheckboxGroup(labels=["locs"], active=[])
 name_checkbox_2 = CheckboxGroup(labels=["name"], active=[])
 obs_vel_checkbox_2 = CheckboxGroup(labels=["obs"], active=[])
