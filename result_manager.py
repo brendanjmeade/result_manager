@@ -29,7 +29,9 @@ pn.extension()
 
 VELOCITY_SCALE = 0.01
 
-# Declare empty ColumnDataStores
+##################################
+# Declare empty ColumnDataStores #
+##################################
 source = ColumnDataSource(
     data={
         "lon": [],
@@ -47,29 +49,29 @@ source = ColumnDataSource(
 
 # Source for block bounding segments. Dict of length n_segments
 segsource = ColumnDataSource(
-    dict(
-        xseg=[],
-        yseg=[],
-        ssrate=[],
-        dsrate=[],
-        active_comp=[],
-    ),
+    data = {
+        "xseg": [],
+        "yseg": [],
+        "ssrate": [],
+        "dsrate": [],
+        "active_comp": [],
+    },
 )
 
 tdesource = ColumnDataSource(
-    dict(
-        xseg=[],
-        yseg=[],
-        ssrate=[],
-        dsrate=[],
-        active_comp=[],
-    ),
+    data = {
+        "xseg": [],
+        "yseg": [],
+        "ssrate": [],
+        "dsrate": [],
+        "active_comp": [],
+    },
 )
 
 
-##########################
-# START: Get folder name #
-##########################
+################################
+# START: Load data from button #
+################################
 
 button = Button(label="Load Data", button_type="success")
 
@@ -86,9 +88,13 @@ def select_folder():
 # Define the callback function
 def load_data():
     # Step 1: Read data from a local file
-    foldername = select_folder()
-    file_path = foldername + "/model_station.csv"
-    station = pd.read_csv(file_path)
+    folder_name = select_folder()
+    station_file_path = folder_name + "/model_station.csv"
+    station = pd.read_csv(station_file_path)
+    segment_file_path = folder_name + "/model_segment.csv"
+    segment = pd.read_csv(segment_file_path)
+    meshes_file_path = folder_name + "/model_meshes.csv"
+    meshes = pd.read_csv(meshes_file_path)
 
     source.data = {
         "lon": station.lon,
@@ -103,25 +109,47 @@ def load_data():
         "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
     }
 
+    # Source for block bounding segments. Dict of length n_segments
+    segsource.data = {
+            "xseg": [
+                np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
+                for i in range(len(segment))
+            ],
+            "yseg": [
+                np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
+                for i in range(len(segment))
+            ],
+            "ssrate": list(segment["model_strike_slip_rate"]),
+            "dsrate": list(segment["model_dip_slip_rate"]),
+            "active_comp": list(segment["model_strike_slip_rate"]),
+    }
+
+    tdesource.data = {
+            "xseg": [
+                np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
+                for j in range(len(meshes.lon1))
+            ],
+            "yseg": [
+                np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
+                for j in range(len(meshes.lon1))
+            ],
+            "ssrate": list(meshes["strike_slip_rate"]),
+            "dsrate": list(meshes["dip_slip_rate"]),
+            "active_comp": list(meshes["strike_slip_rate"]),
+    }
+
 
 # Link the callback function to the button
 button.on_click(load_data)
 
-##########################
-# END: Get folder name #
-##########################
+##############################
+# END: Load data from button #
+##############################
 
 
-# Set up data set
-dir1 = "0000000343"
-station_file_1 = dir1 + "/model_station.csv"
-station = pd.read_csv(station_file_1)
-segment_file_1 = dir1 + "/model_segment.csv"
-segment = pd.read_csv(segment_file_1)
-mesh_file_1 = dir1 + "/model_meshes.csv"
-meshes = pd.read_csv(mesh_file_1)
-
-
+################
+# Figure setup #
+################
 def get_coastlines():
     COASTLINES = scipy.io.loadmat("coastlines.mat")
     COASTLINES["lon"] = COASTLINES["lon"].flatten()
@@ -129,64 +157,6 @@ def get_coastlines():
     return COASTLINES
 
 
-COASTLINES = get_coastlines()
-
-################
-# Data sources #
-################
-
-# VELOCITY_SCALE = 0.01
-# source = ColumnDataSource(
-#     data={
-#         "lon": station.lon,
-#         "lat": station.lat,
-#         "obs_east_vel": station.east_vel,
-#         "obs_north_vel": station.north_vel,
-#         "obs_east_vel_lon": station.lon + VELOCITY_SCALE * station.east_vel,
-#         "obs_north_vel_lat": station.lat + VELOCITY_SCALE * station.north_vel,
-#         "mod_east_vel": station.model_east_vel,
-#         "mod_north_vel": station.model_north_vel,
-#         "mod_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel,
-#         "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
-#     }
-# )
-
-# # Source for block bounding segments. Dict of length n_segments
-# segsource = ColumnDataSource(
-#     dict(
-#         xseg=[
-#             np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
-#             for i in range(len(segment))
-#         ],
-#         yseg=[
-#             np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
-#             for i in range(len(segment))
-#         ],
-#         ssrate=list(segment["model_strike_slip_rate"]),
-#         dsrate=list(segment["model_dip_slip_rate"]),
-#         active_comp=list(segment["model_strike_slip_rate"]),
-#     ),
-# )
-
-# tdesource = ColumnDataSource(
-#     dict(
-#         xseg=[
-#             np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
-#             for j in range(len(meshes.lon1))
-#         ],
-#         yseg=[
-#             np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
-#             for j in range(len(meshes.lon1))
-#         ],
-#         ssrate=list(meshes["strike_slip_rate"]),
-#         dsrate=list(meshes["dip_slip_rate"]),
-#         active_comp=list(meshes["strike_slip_rate"]),
-#     ),
-# )
-
-################
-# Figure setup #
-################
 fig = figure(
     x_range=(0, 360),
     y_range=(-90, 90),
@@ -300,6 +270,7 @@ seg_obj_1 = fig.multi_line(
 )
 
 # Coastlines
+COASTLINES = get_coastlines()
 fig.line(
     COASTLINES["lon"],
     COASTLINES["lat"],
