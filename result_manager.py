@@ -33,7 +33,7 @@ VELOCITY_SCALE = 0.01
 ##################################
 # Declare empty ColumnDataStores #
 ##################################
-source = ColumnDataSource(
+stasource_1 = ColumnDataSource(
     data={
         "lon": [],
         "lat": [],
@@ -73,7 +73,7 @@ source = ColumnDataSource(
 )
 
 # Source for block bounding segments. Dict of length n_segments
-segsource = ColumnDataSource(
+segsource_1 = ColumnDataSource(
     data={
         "xseg": [],
         "yseg": [],
@@ -83,7 +83,7 @@ segsource = ColumnDataSource(
     },
 )
 
-tdesource = ColumnDataSource(
+tdesource_1 = ColumnDataSource(
     data={
         "xseg": [],
         "yseg": [],
@@ -92,6 +92,10 @@ tdesource = ColumnDataSource(
         "active_comp": [],
     },
 )
+
+stasource_2 = stasource_1
+segsource_2 = segsource_1
+tdesource_2 = tdesource_1
 
 
 ################################
@@ -101,9 +105,12 @@ tdesource = ColumnDataSource(
 folder_load_button_1 = Button(label="load", button_type="success")
 folder_label_1 = Div(text="---")
 
+folder_load_button_2 = Button(label="load", button_type="success")
+folder_label_2 = Div(text="---")
+
 
 # Define the load_data callback function
-def load_data():
+def load_data1():
     # Read data from a local folder
     root = tk.Tk()
     root.withdraw()  # Hide the root window
@@ -117,7 +124,7 @@ def load_data():
     segment = pd.read_csv(folder_name + "/model_segment.csv")
     meshes = pd.read_csv(folder_name + "/model_meshes.csv")
 
-    source.data = {
+    stasource_1.data = {
         "lon": station.lon,
         "lat": station.lat,
         "obs_east_vel": station.east_vel,
@@ -164,7 +171,7 @@ def load_data():
     }
 
     # Source for block bounding segments. Dict of length n_segments
-    segsource.data = {
+    segsource_1.data = {
         "xseg": [
             np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
             for i in range(len(segment))
@@ -178,7 +185,98 @@ def load_data():
         "active_comp": list(segment["model_strike_slip_rate"]),
     }
 
-    tdesource.data = {
+    tdesource_1.data = {
+        "xseg": [
+            np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
+            for j in range(len(meshes.lon1))
+        ],
+        "yseg": [
+            np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
+            for j in range(len(meshes.lon1))
+        ],
+        "ssrate": list(meshes["strike_slip_rate"]),
+        "dsrate": list(meshes["dip_slip_rate"]),
+        "active_comp": list(meshes["strike_slip_rate"]),
+    }
+
+
+# Define the load_data callback function
+def load_data2():
+    # Read data from a local folder
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+    folder_name = filedialog.askdirectory(title="load")
+
+    # Set display of folder name
+    folder_label_2.text = folder_name.split("/")[-1]
+
+    # Read model out put as dataframes
+    station = pd.read_csv(folder_name + "/model_station.csv")
+    segment = pd.read_csv(folder_name + "/model_segment.csv")
+    meshes = pd.read_csv(folder_name + "/model_meshes.csv")
+
+    stasource_2.data = {
+        "lon": station.lon,
+        "lat": station.lat,
+        "obs_east_vel": station.east_vel,
+        "obs_north_vel": station.north_vel,
+        "obs_east_vel_lon": station.lon + VELOCITY_SCALE * station.east_vel,
+        "obs_north_vel_lat": station.lat + VELOCITY_SCALE * station.north_vel,
+        "mod_east_vel": station.model_east_vel,
+        "mod_north_vel": station.model_north_vel,
+        "mod_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel,
+        "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
+        "res_east_vel": station.model_east_vel_residual,
+        "res_north_vel": station.model_north_vel_residual,
+        "res_east_vel_lon": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_residual,
+        "res_north_vel_lat": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_residual,
+        "rot_east_vel": station.model_east_vel_rotation,
+        "rot_north_vel": station.model_north_vel_rotation,
+        "rot_east_vel_lon": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_rotation,
+        "rot_north_vel_lat": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_rotation,
+        "seg_east_vel": station.model_east_elastic_segment,
+        "seg_north_vel": station.model_north_elastic_segment,
+        "seg_east_vel_lon": station.lon
+        + VELOCITY_SCALE * station.model_east_elastic_segment,
+        "seg_north_vel_lat": station.lat
+        + VELOCITY_SCALE * station.model_north_elastic_segment,
+        "tde_east_vel": station.model_east_vel_tde,
+        "tde_north_vel": station.model_north_vel_tde,
+        "tde_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel_tde,
+        "tde_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel_tde,
+        "str_east_vel": station.model_east_vel_block_strain_rate,
+        "str_north_vel": station.model_north_vel_block_strain_rate,
+        "str_east_vel_lon": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_block_strain_rate,
+        "str_north_vel_lat": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_block_strain_rate,
+        "mog_east_vel": station.model_east_vel_mogi,
+        "mog_north_vel": station.model_north_vel_mogi,
+        "mog_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel_mogi,
+        "mog_north_vel_lat": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_mogi,
+    }
+
+    # Source for block bounding segments. Dict of length n_segments
+    segsource_2.data = {
+        "xseg": [
+            np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
+            for i in range(len(segment))
+        ],
+        "yseg": [
+            np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
+            for i in range(len(segment))
+        ],
+        "ssrate": list(segment["model_strike_slip_rate"]),
+        "dsrate": list(segment["model_dip_slip_rate"]),
+        "active_comp": list(segment["model_strike_slip_rate"]),
+    }
+
+    tdesource_2.data = {
         "xseg": [
             np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
             for j in range(len(meshes.lon1))
@@ -194,7 +292,8 @@ def load_data():
 
 
 # Link the callback function to the button
-folder_load_button_1.on_click(load_data)
+folder_load_button_1.on_click(load_data1)
+folder_load_button_2.on_click(load_data2)
 
 ##############################
 # END: Load data from button #
@@ -276,8 +375,11 @@ str_vel_checkbox_2 = CheckboxGroup(labels=["str"], active=[])
 mog_vel_checkbox_2 = CheckboxGroup(labels=["mog"], active=[])
 
 seg_text_checkbox_2 = CheckboxGroup(labels=["slip"], active=[])
+seg_text_radio_2 = RadioButtonGroup(labels=["ss", "ds"], active=0)
 seg_color_checkbox_2 = CheckboxGroup(labels=["slip"], active=[])
+seg_color_radio_2 = RadioButtonGroup(labels=["ss", "ds"], active=0)
 tde_checkbox_2 = CheckboxGroup(labels=["tde"], active=[])
+tde_radio_2 = RadioButtonGroup(labels=["ss", "ds"], active=0)
 
 
 # Other controls
@@ -289,6 +391,10 @@ velocity_scaler = Slider(
 ###############
 # Map objects #
 ###############
+
+############
+# Folder 2 #
+############
 
 # Velocity colors
 obs_color = RGB(r=0, g=0, b=256)
@@ -304,7 +410,7 @@ str_color = RGB(r=0, g=128, b=128)
 tde_obj_1 = fig.patches(
     xs="xseg",
     ys="yseg",
-    source=tdesource,
+    source=tdesource_1,
     fill_color={"field": "active_comp", "transform": slip_color_mapper},
     line_width=0,
     visible=False,
@@ -315,7 +421,7 @@ seg_obj_1 = fig.multi_line(
     xs="xseg",
     ys="yseg",
     line_color="blue",
-    source=segsource,
+    source=segsource_1,
     line_width=1,
     visible=True,
 )
@@ -325,7 +431,7 @@ seg_color_obj_1 = fig.multi_line(
     xs="xseg",
     ys="yseg",
     line_color={"field": "active_comp", "transform": slip_color_mapper},
-    source=segsource,
+    source=segsource_1,
     line_width=4,
     visible=False,
 )
@@ -341,7 +447,7 @@ fig.line(
 
 # Create glyphs all potential plotting elements and hide them as default
 loc_obj_1 = fig.scatter(
-    "lon", "lat", source=source, size=1, color="black", visible=False
+    "lon", "lat", source=stasource_1, size=1, color="black", visible=False
 )
 
 # Folder 1: observed velocities
@@ -350,7 +456,7 @@ obs_vel_obj_1 = fig.segment(
     "lat",
     "obs_east_vel_lon",
     "obs_north_vel_lat",
-    source=source,
+    source=stasource_1,
     line_width=1,
     color=obs_color,
     alpha=0.5,
@@ -363,7 +469,7 @@ mod_vel_obj_1 = fig.segment(
     "lat",
     "mod_east_vel_lon",
     "mod_north_vel_lat",
-    source=source,
+    source=stasource_1,
     line_width=1,
     color=mod_color,
     alpha=0.5,
@@ -376,7 +482,7 @@ res_vel_obj_1 = fig.segment(
     "lat",
     "res_east_vel_lon",
     "res_north_vel_lat",
-    source=source,
+    source=stasource_1,
     line_width=1,
     color=res_color,
     visible=False,
@@ -388,7 +494,7 @@ rot_vel_obj_1 = fig.segment(
     "lat",
     "rot_east_vel_lon",
     "rot_north_vel_lat",
-    source=source,
+    source=stasource_1,
     line_width=1,
     color=rot_color,
     visible=False,
@@ -400,7 +506,7 @@ seg_vel_obj_1 = fig.segment(
     "lat",
     "seg_east_vel_lon",
     "seg_north_vel_lat",
-    source=source,
+    source=stasource_1,
     line_width=1,
     color=seg_color,
     visible=False,
@@ -412,7 +518,7 @@ tde_vel_obj_1 = fig.segment(
     "lat",
     "tde_east_vel_lon",
     "tde_north_vel_lat",
-    source=source,
+    source=stasource_1,
     line_width=1,
     color=tde_color,
     alpha=0.5,
@@ -425,7 +531,7 @@ str_vel_obj_1 = fig.segment(
     "lat",
     "str_east_vel_lon",
     "str_north_vel_lat",
-    source=source,
+    source=stasource_1,
     line_width=1,
     color=str_color,
     alpha=0.5,
@@ -438,7 +544,156 @@ mog_vel_obj_1 = fig.segment(
     "lat",
     "mog_east_vel_lon",
     "mog_north_vel_lat",
-    source=source,
+    source=stasource_1,
+    line_width=1,
+    color=str_color,
+    alpha=0.5,
+    visible=False,
+)
+
+############
+# Folder 2 #
+############
+
+# Velocity colors for folder 2
+obs_color = RGB(r=0, g=0, b=256)
+mod_color = RGB(r=256, g=0, b=0)
+res_color = RGB(r=256, g=0, b=256)
+rot_color = RGB(r=0, g=256, b=0)
+seg_color = RGB(r=0, g=256, b=256)
+tde_color = RGB(r=256, g=166, b=0)
+str_color = RGB(r=0, g=128, b=128)
+
+# Folder 1: TDE slip rates
+# Plotting these first so that coastlines, segments, and stations lie above
+tde_obj_2 = fig.patches(
+    xs="xseg",
+    ys="yseg",
+    source=tdesource_2,
+    fill_color={"field": "active_comp", "transform": slip_color_mapper},
+    line_width=0,
+    visible=False,
+)
+
+# Folder 1: Static segments. Always shown
+seg_obj_2 = fig.multi_line(
+    xs="xseg",
+    ys="yseg",
+    line_color="blue",
+    source=segsource_2,
+    line_width=1,
+    visible=True,
+)
+
+# Folder 1: Colored line rates
+seg_color_obj_2 = fig.multi_line(
+    xs="xseg",
+    ys="yseg",
+    line_color={"field": "active_comp", "transform": slip_color_mapper},
+    source=segsource_2,
+    line_width=4,
+    visible=False,
+)
+
+loc_obj_2 = fig.scatter(
+    "lon", "lat", source=stasource_2, size=1, color="black", visible=False
+)
+
+# Folder 1: observed velocities
+obs_vel_obj_2 = fig.segment(
+    "lon",
+    "lat",
+    "obs_east_vel_lon",
+    "obs_north_vel_lat",
+    source=stasource_2,
+    line_width=1,
+    color=obs_color,
+    alpha=0.5,
+    visible=False,
+)
+
+# Folder 1: modeled velocities
+mod_vel_obj_2 = fig.segment(
+    "lon",
+    "lat",
+    "mod_east_vel_lon",
+    "mod_north_vel_lat",
+    source=stasource_2,
+    line_width=1,
+    color=mod_color,
+    alpha=0.5,
+    visible=False,
+)
+
+# Folder 1: residual velocities
+res_vel_obj_2 = fig.segment(
+    "lon",
+    "lat",
+    "res_east_vel_lon",
+    "res_north_vel_lat",
+    source=stasource_2,
+    line_width=1,
+    color=res_color,
+    visible=False,
+)
+
+# Folder 1: rotation velocities
+rot_vel_obj_2 = fig.segment(
+    "lon",
+    "lat",
+    "rot_east_vel_lon",
+    "rot_north_vel_lat",
+    source=stasource_2,
+    line_width=1,
+    color=rot_color,
+    visible=False,
+)
+
+# Folder 1: elastic velocities
+seg_vel_obj_2 = fig.segment(
+    "lon",
+    "lat",
+    "seg_east_vel_lon",
+    "seg_north_vel_lat",
+    source=stasource_2,
+    line_width=1,
+    color=seg_color,
+    visible=False,
+)
+
+# Folder 1: tde velocities
+tde_vel_obj_2 = fig.segment(
+    "lon",
+    "lat",
+    "tde_east_vel_lon",
+    "tde_north_vel_lat",
+    source=stasource_2,
+    line_width=1,
+    color=tde_color,
+    alpha=0.5,
+    visible=False,
+)
+
+# Folder 1: strain velocities
+str_vel_obj_2 = fig.segment(
+    "lon",
+    "lat",
+    "str_east_vel_lon",
+    "str_north_vel_lat",
+    source=stasource_2,
+    line_width=1,
+    color=str_color,
+    alpha=0.5,
+    visible=False,
+)
+
+# Folder 1: mogi velocities
+mog_vel_obj_2 = fig.segment(
+    "lon",
+    "lat",
+    "mog_east_vel_lon",
+    "mog_north_vel_lat",
+    source=stasource_2,
     line_width=1,
     color=str_color,
     alpha=0.5,
@@ -448,50 +703,18 @@ mog_vel_obj_1 = fig.segment(
 #############
 # Callbacks #
 #############
-# Define JavaScript callbacks to toggle visibility
+
+# Define JavaScript callback to toggle visibility
 checkbox_callback_js = """
     plot_object.visible = cb_obj.active.includes(0);
 """
 
-loc_checkbox_callback_1 = CustomJS(
-    args={"scatter": loc_obj_1},
-    code="""
-    scatter.visible = cb_obj.active.includes(0);
-""",
-)
-
-obs_vel_checkbox_callback_1 = CustomJS(
-    args={"segment": obs_vel_obj_1},
-    code="""
-    segment.visible = cb_obj.active.includes(0);
-""",
-)
-
-mod_vel_checkbox_callback_1 = CustomJS(
-    args={"segment": mod_vel_obj_1},
-    code="""
-    segment.visible = cb_obj.active.includes(0);
-""",
-)
-
-seg_color_checkbox_callback_1 = CustomJS(
-    args={"segment": seg_color_obj_1},
-    code="""
-    segment.visible = cb_obj.active.includes(0);
-""",
-)
-
-tde_checkbox_callback_1 = CustomJS(
-    args={"segment": tde_obj_1},
-    code="""
-    segment.visible = cb_obj.active.includes(0);
-""",
-)
-
 # JavaScript callback for velocity magnitude scaling
 velocity_scaler_callback = CustomJS(
     args=dict(
-        source=source, velocity_scaler=velocity_scaler, VELOCITY_SCALE=VELOCITY_SCALE
+        source=stasource_1,
+        velocity_scaler=velocity_scaler,
+        VELOCITY_SCALE=VELOCITY_SCALE,
     ),
     code="""
     const velocity_scale_slider = velocity_scaler.value
@@ -606,23 +829,67 @@ str_vel_checkbox_1.js_on_change(
 mog_vel_checkbox_1.js_on_change(
     "active", CustomJS(args={"plot_object": mog_vel_obj_1}, code=checkbox_callback_js)
 )
-# loc_checkbox_1.js_on_change("active", loc_checkbox_callback_1)
-# obs_vel_checkbox_1.js_on_change("active", obs_vel_checkbox_callback_1)
-# mod_vel_checkbox_1.js_on_change("active", mod_vel_checkbox_callback_1)
-
-velocity_scaler.js_on_change("value", velocity_scaler_callback)
 seg_color_checkbox_1.js_on_change(
     "active", CustomJS(args={"plot_object": seg_color_obj_1}, code=checkbox_callback_js)
 )
 seg_color_radio_1.js_on_change(
-    "active", CustomJS(args=dict(source=segsource), code=slip_component_callback_js)
+    "active", CustomJS(args=dict(source=segsource_1), code=slip_component_callback_js)
 )
 tde_checkbox_1.js_on_change(
     "active", CustomJS(args={"plot_object": tde_obj_1}, code=checkbox_callback_js)
 )
 tde_radio_1.js_on_change(
-    "active", CustomJS(args=dict(source=tdesource), code=slip_component_callback_js)
+    "active", CustomJS(args=dict(source=tdesource_1), code=slip_component_callback_js)
 )
+
+# Folder 2
+loc_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": loc_obj_2}, code=checkbox_callback_js)
+)
+obs_vel_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": obs_vel_obj_2}, code=checkbox_callback_js)
+)
+mod_vel_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": mod_vel_obj_2}, code=checkbox_callback_js)
+)
+res_vel_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": res_vel_obj_2}, code=checkbox_callback_js)
+)
+rot_vel_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": rot_vel_obj_2}, code=checkbox_callback_js)
+)
+seg_vel_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": seg_vel_obj_2}, code=checkbox_callback_js)
+)
+tde_vel_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": tde_vel_obj_2}, code=checkbox_callback_js)
+)
+str_vel_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": str_vel_obj_2}, code=checkbox_callback_js)
+)
+mog_vel_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": mog_vel_obj_2}, code=checkbox_callback_js)
+)
+seg_color_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": seg_color_obj_2}, code=checkbox_callback_js)
+)
+seg_color_radio_2.js_on_change(
+    "active", CustomJS(args=dict(source=segsource_2), code=slip_component_callback_js)
+)
+tde_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": tde_obj_2}, code=checkbox_callback_js)
+)
+tde_radio_2.js_on_change(
+    "active", CustomJS(args=dict(source=tdesource_2), code=slip_component_callback_js)
+)
+
+# Shared between folder 1 and 2
+
+# Velocity slider
+velocity_scaler.js_on_change("value", velocity_scaler_callback)
+
+# Residual comparison
+
 
 ##############################
 # Place objects on panel grid #
@@ -653,6 +920,7 @@ grid_layout[6, 0] = pn.Column(
 
 # Placing controls for folder 2
 grid_layout[0:1, 1] = pn.Column(
+    pn.pane.Bokeh(folder_load_button_2),
     pn.pane.Bokeh(folder_label_2),
     pn.pane.Bokeh(loc_checkbox_2),
     pn.pane.Bokeh(obs_vel_checkbox_2),
@@ -663,6 +931,13 @@ grid_layout[0:1, 1] = pn.Column(
     pn.pane.Bokeh(tde_vel_checkbox_2),
     pn.pane.Bokeh(str_vel_checkbox_2),
     pn.pane.Bokeh(mog_vel_checkbox_2),
+)
+
+grid_layout[6, 1] = pn.Column(
+    pn.pane.Bokeh(seg_color_checkbox_2),
+    pn.pane.Bokeh(seg_color_radio_2),
+    pn.pane.Bokeh(tde_checkbox_2),
+    pn.pane.Bokeh(tde_radio_2),
 )
 
 grid_layout[5, 0:1] = pn.Column(
