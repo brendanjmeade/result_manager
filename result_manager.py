@@ -73,18 +73,16 @@ tdesource = ColumnDataSource(
 # START: Load data from button #
 ################################
 
-folder_load_button_1 = Button(label="Load", button_type="success")
-folder_label_1 = Div(text="empty")
+folder_load_button_1 = Button(label="load", button_type="success")
+folder_label_1 = Div(text="---")
 
 # Define the load_data callback function
 def load_data():
     # Read data from a local folder
     root = tk.Tk()
     root.withdraw()  # Hide the root window
-    folder_name = filedialog.askdirectory(
-        title="load", initialdir="/Users/meade/Desktop/result_manager"
-    )
-
+    folder_name = filedialog.askdirectory(title="load")
+    
     # Set display of folder name
     folder_label_1.text = folder_name.split("/")[-1]
 
