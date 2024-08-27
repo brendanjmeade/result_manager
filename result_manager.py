@@ -49,7 +49,7 @@ source = ColumnDataSource(
 
 # Source for block bounding segments. Dict of length n_segments
 segsource = ColumnDataSource(
-    data = {
+    data={
         "xseg": [],
         "yseg": [],
         "ssrate": [],
@@ -59,7 +59,7 @@ segsource = ColumnDataSource(
 )
 
 tdesource = ColumnDataSource(
-    data = {
+    data={
         "xseg": [],
         "yseg": [],
         "ssrate": [],
@@ -76,13 +76,14 @@ tdesource = ColumnDataSource(
 folder_load_button_1 = Button(label="load", button_type="success")
 folder_label_1 = Div(text="---")
 
+
 # Define the load_data callback function
 def load_data():
     # Read data from a local folder
     root = tk.Tk()
     root.withdraw()  # Hide the root window
     folder_name = filedialog.askdirectory(title="load")
-    
+
     # Set display of folder name
     folder_label_1.text = folder_name.split("/")[-1]
 
@@ -106,31 +107,31 @@ def load_data():
 
     # Source for block bounding segments. Dict of length n_segments
     segsource.data = {
-            "xseg": [
-                np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
-                for i in range(len(segment))
-            ],
-            "yseg": [
-                np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
-                for i in range(len(segment))
-            ],
-            "ssrate": list(segment["model_strike_slip_rate"]),
-            "dsrate": list(segment["model_dip_slip_rate"]),
-            "active_comp": list(segment["model_strike_slip_rate"]),
+        "xseg": [
+            np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
+            for i in range(len(segment))
+        ],
+        "yseg": [
+            np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
+            for i in range(len(segment))
+        ],
+        "ssrate": list(segment["model_strike_slip_rate"]),
+        "dsrate": list(segment["model_dip_slip_rate"]),
+        "active_comp": list(segment["model_strike_slip_rate"]),
     }
 
     tdesource.data = {
-            "xseg": [
-                np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
-                for j in range(len(meshes.lon1))
-            ],
-            "yseg": [
-                np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
-                for j in range(len(meshes.lon1))
-            ],
-            "ssrate": list(meshes["strike_slip_rate"]),
-            "dsrate": list(meshes["dip_slip_rate"]),
-            "active_comp": list(meshes["strike_slip_rate"]),
+        "xseg": [
+            np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
+            for j in range(len(meshes.lon1))
+        ],
+        "yseg": [
+            np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
+            for j in range(len(meshes.lon1))
+        ],
+        "ssrate": list(meshes["strike_slip_rate"]),
+        "dsrate": list(meshes["dip_slip_rate"]),
+        "active_comp": list(meshes["strike_slip_rate"]),
     }
 
 
