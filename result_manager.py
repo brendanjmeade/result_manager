@@ -75,20 +75,15 @@ tdesource = ColumnDataSource(
 
 button = Button(label="Load Data", button_type="success")
 
-
-def select_folder():
+# Define the load_data callback function
+def load_data():
+    # Read data from a local folder
     root = tk.Tk()
     root.withdraw()  # Hide the root window
-    foldername = filedialog.askdirectory(
+    folder_name = filedialog.askdirectory(
         title="load", initialdir="/Users/meade/Desktop/result_manager"
     )
-    return foldername
 
-
-# Define the callback function
-def load_data():
-    # Step 1: Read data from a local file
-    folder_name = select_folder()
     station_file_path = folder_name + "/model_station.csv"
     station = pd.read_csv(station_file_path)
     segment_file_path = folder_name + "/model_segment.csv"
