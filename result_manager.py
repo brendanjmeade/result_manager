@@ -182,7 +182,9 @@ def load_data1():
             for i in range(len(segment))
         ],
         "ssrate": list(segment["model_strike_slip_rate"]),
-        "dsrate": list(segment["model_dip_slip_rate"]),
+        "dsrate": list(
+            segment["model_dip_slip_rate"] - segment["model_tensile_slip_rate"]
+        ),
         "active_comp": list(segment["model_strike_slip_rate"]),
     }
 
@@ -273,7 +275,9 @@ def load_data2():
             for i in range(len(segment))
         ],
         "ssrate": list(segment["model_strike_slip_rate"]),
-        "dsrate": list(segment["model_dip_slip_rate"]),
+        "dsrate": list(
+            segment["model_dip_slip_rate"] - segment["model_tensile_slip_rate"]
+        ),
         "active_comp": list(segment["model_strike_slip_rate"]),
     }
 
@@ -393,10 +397,6 @@ velocity_scaler = Slider(
 # Map objects #
 ###############
 
-############
-# Folder 2 #
-############
-
 # Velocity colors
 obs_color = RGB(r=0, g=0, b=256)
 mod_color = RGB(r=256, g=0, b=0)
@@ -417,6 +417,17 @@ tde_obj_1 = fig.patches(
     visible=False,
 )
 
+# Folder 2: TDE slip rates
+# Plotting these first so that coastlines, segments, and stations lie above
+tde_obj_2 = fig.patches(
+    xs="xseg",
+    ys="yseg",
+    source=tdesource_2,
+    fill_color={"field": "active_comp", "transform": slip_color_mapper},
+    line_width=0,
+    visible=False,
+)
+
 # Folder 1: Static segments. Always shown
 seg_obj_1 = fig.multi_line(
     xs="xseg",
@@ -427,12 +438,33 @@ seg_obj_1 = fig.multi_line(
     visible=True,
 )
 
+# Folder 2: Static segments. Always shown
+seg_obj_2 = fig.multi_line(
+    xs="xseg",
+    ys="yseg",
+    line_color="blue",
+    source=segsource_2,
+    line_width=1,
+    line_dash="dashed",
+    visible=True,
+)
+
 # Folder 1: Colored line rates
 seg_color_obj_1 = fig.multi_line(
     xs="xseg",
     ys="yseg",
     line_color={"field": "active_comp", "transform": slip_color_mapper},
     source=segsource_1,
+    line_width=4,
+    visible=False,
+)
+
+# Folder 2: Colored line rates
+seg_color_obj_2 = fig.multi_line(
+    xs="xseg",
+    ys="yseg",
+    line_color={"field": "active_comp", "transform": slip_color_mapper},
+    source=segsource_2,
     line_width=4,
     visible=False,
 )
@@ -564,37 +596,6 @@ rot_color = RGB(r=0, g=256, b=0)
 seg_color = RGB(r=0, g=256, b=256)
 tde_color = RGB(r=256, g=166, b=0)
 str_color = RGB(r=0, g=128, b=128)
-
-# Folder 1: TDE slip rates
-# Plotting these first so that coastlines, segments, and stations lie above
-tde_obj_2 = fig.patches(
-    xs="xseg",
-    ys="yseg",
-    source=tdesource_2,
-    fill_color={"field": "active_comp", "transform": slip_color_mapper},
-    line_width=0,
-    visible=False,
-)
-
-# Folder 1: Static segments. Always shown
-seg_obj_2 = fig.multi_line(
-    xs="xseg",
-    ys="yseg",
-    line_color="blue",
-    source=segsource_2,
-    line_width=1,
-    visible=True,
-)
-
-# Folder 1: Colored line rates
-seg_color_obj_2 = fig.multi_line(
-    xs="xseg",
-    ys="yseg",
-    line_color={"field": "active_comp", "transform": slip_color_mapper},
-    source=segsource_2,
-    line_width=4,
-    visible=False,
-)
 
 loc_obj_2 = fig.scatter(
     "lon", "lat", source=stasource_2, size=1, color="black", visible=False
