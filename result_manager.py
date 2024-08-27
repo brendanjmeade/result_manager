@@ -2,6 +2,8 @@ import scipy
 import panel as pn
 import pandas as pd
 import numpy as np
+import tkinter as tk
+from tkinter import filedialog
 
 from bokeh.plotting import figure
 from bokeh.models import (
@@ -26,73 +28,72 @@ from bokeh.colors import RGB
 
 pn.extension()
 
-##########################
-# START: Get folder name #
-##########################
-
-
-# Step 1: Create a Bokeh button
-load_folder_button_1 = Button(label="Select a Folder", button_type="success")
-
-# Step 2: Create a Div to display the selected folder name
-load_folder_text_1 = Div(text="NA", width=100, height=10)
-
-# Step 3: JavaScript code to create a hidden folder input and handle the folder selection
-load_folder_button_callback_1 = CustomJS(
-    args=dict(load_folder_text_1=load_folder_text_1),
-    code="""
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.webkitdirectory = true;
-    input.onchange = function() {
-        var files = input.files;
-        if (files.length > 0) {
-            // Extract the folder path from the first selected file
-            var path = files[0].webkitRelativePath;
-            var folderName = path.split('/')[0];
-            load_folder_text_1.text = folderName;
-        } else {
-            load_folder_text_1.text = 'NA';
-        }
-    };
-    input.click();
-""",
-)
-
-# Step 4: Attach the callback to the button
-load_folder_button_1.js_on_event("button_click", load_folder_button_callback_1)
-
-##########################
-# END: Get folder name #
-##########################
-
-
-# Set up data set
-dir1 = "0000000343"
-station_file_1 = dir1 + "/model_station.csv"
-station = pd.read_csv(station_file_1)
-segment_file_1 = dir1 + "/model_segment.csv"
-segment = pd.read_csv(segment_file_1)
-mesh_file_1 = dir1 + "/model_meshes.csv"
-meshes = pd.read_csv(mesh_file_1)
-
-
-def get_coastlines():
-    COASTLINES = scipy.io.loadmat("coastlines.mat")
-    COASTLINES["lon"] = COASTLINES["lon"].flatten()
-    COASTLINES["lat"] = COASTLINES["lat"].flatten()
-    return COASTLINES
-
-
-COASTLINES = get_coastlines()
-
-################
-# Data sources #
-################
-
 VELOCITY_SCALE = 0.01
+
+##################################
+# Declare empty ColumnDataStores #
+##################################
 source = ColumnDataSource(
     data={
+        "lon": [],
+        "lat": [],
+        "obs_east_vel": [],
+        "obs_north_vel": [],
+        "obs_east_vel_lon": [],
+        "obs_north_vel_lat": [],
+        "mod_east_vel": [],
+        "mod_north_vel": [],
+        "mod_east_vel_lon": [],
+        "mod_north_vel_lat": [],
+    }
+)
+
+# Source for block bounding segments. Dict of length n_segments
+segsource = ColumnDataSource(
+    data={
+        "xseg": [],
+        "yseg": [],
+        "ssrate": [],
+        "dsrate": [],
+        "active_comp": [],
+    },
+)
+
+tdesource = ColumnDataSource(
+    data={
+        "xseg": [],
+        "yseg": [],
+        "ssrate": [],
+        "dsrate": [],
+        "active_comp": [],
+    },
+)
+
+
+################################
+# START: Load data from button #
+################################
+
+folder_load_button_1 = Button(label="load", button_type="success")
+folder_label_1 = Div(text="---")
+
+
+# Define the load_data callback function
+def load_data():
+    # Read data from a local folder
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+    folder_name = filedialog.askdirectory(title="load")
+
+    # Set display of folder name
+    folder_label_1.text = folder_name.split("/")[-1]
+
+    # Read model out put as dataframes
+    station = pd.read_csv(folder_name + "/model_station.csv")
+    segment = pd.read_csv(folder_name + "/model_segment.csv")
+    meshes = pd.read_csv(folder_name + "/model_meshes.csv")
+
+    source.data = {
         "lon": station.lon,
         "lat": station.lat,
         "obs_east_vel": station.east_vel,
@@ -137,44 +138,55 @@ source = ColumnDataSource(
         "mog_north_vel_lat": station.lat
         + VELOCITY_SCALE * station.model_north_vel_mogi,
     }
-)
 
-# Source for block bounding segments. Dict of length n_segments
-segsource = ColumnDataSource(
-    dict(
-        xseg=[
+    # Source for block bounding segments. Dict of length n_segments
+    segsource.data = {
+        "xseg": [
             np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
             for i in range(len(segment))
         ],
-        yseg=[
+        "yseg": [
             np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
             for i in range(len(segment))
         ],
-        ssrate=list(segment["model_strike_slip_rate"]),
-        dsrate=list(segment["model_dip_slip_rate"]),
-        active_comp=list(segment["model_strike_slip_rate"]),
-    ),
-)
+        "ssrate": list(segment["model_strike_slip_rate"]),
+        "dsrate": list(segment["model_dip_slip_rate"]),
+        "active_comp": list(segment["model_strike_slip_rate"]),
+    }
 
-tdesource = ColumnDataSource(
-    dict(
-        xseg=[
+    tdesource.data = {
+        "xseg": [
             np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
             for j in range(len(meshes.lon1))
         ],
-        yseg=[
+        "yseg": [
             np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
             for j in range(len(meshes.lon1))
         ],
-        ssrate=list(meshes["strike_slip_rate"]),
-        dsrate=list(meshes["dip_slip_rate"]),
-        active_comp=list(meshes["strike_slip_rate"]),
-    ),
-)
+        "ssrate": list(meshes["strike_slip_rate"]),
+        "dsrate": list(meshes["dip_slip_rate"]),
+        "active_comp": list(meshes["strike_slip_rate"]),
+    }
+
+
+# Link the callback function to the button
+folder_load_button_1.on_click(load_data)
+
+##############################
+# END: Load data from button #
+##############################
+
 
 ################
 # Figure setup #
 ################
+def get_coastlines():
+    COASTLINES = scipy.io.loadmat("coastlines.mat")
+    COASTLINES["lon"] = COASTLINES["lon"].flatten()
+    COASTLINES["lat"] = COASTLINES["lat"].flatten()
+    return COASTLINES
+
+
 fig = figure(
     x_range=(0, 360),
     y_range=(-90, 90),
@@ -189,7 +201,6 @@ fig.ygrid.visible = False
 fig.add_layout(LinearAxis(), "above")  # Add axis on the top
 fig.add_layout(LinearAxis(), "right")  # Add axis on the right
 
-
 # Grid layout
 grid_layout = pn.GridSpec(sizing_mode="stretch_both", max_height=600)
 
@@ -201,7 +212,7 @@ slip_color_mapper = LinearColorMapper(palette=brewer["RdBu"][11], low=-100, high
 ##############
 # Folder 1 controls
 folder_name_1 = "0000000292"
-folder_label_1 = Div(text="folder_1: 0000000292")
+# folder_label_1 = Div(text="folder_1: 0000000292")
 loc_checkbox_1 = CheckboxGroup(labels=["locs"], active=[])
 name_checkbox_1 = CheckboxGroup(labels=["name"], active=[])
 obs_vel_checkbox_1 = CheckboxGroup(labels=["obs"], active=[])
@@ -296,6 +307,7 @@ seg_color_obj_1 = fig.multi_line(
 )
 
 # Coastlines
+COASTLINES = get_coastlines()
 fig.line(
     COASTLINES["lon"],
     COASTLINES["lat"],
@@ -589,8 +601,9 @@ tde_radio_1.js_on_change(
 ###############################
 # Placing controls for folder 1
 grid_layout[0:1, 0] = pn.Column(
-    pn.pane.Bokeh(load_folder_button_1),
-    pn.pane.Bokeh(load_folder_text_1),
+    # pn.pane.Bokeh(button),
+    pn.pane.Bokeh(folder_load_button_1),
+    # pn.pane.Bokeh(load_folder_text_1),
     pn.pane.Bokeh(folder_label_1),
     pn.pane.Bokeh(loc_checkbox_1),
     pn.pane.Bokeh(obs_vel_checkbox_1),
@@ -602,13 +615,13 @@ grid_layout[0:1, 0] = pn.Column(
     pn.pane.Bokeh(str_vel_checkbox_1),
     pn.pane.Bokeh(mog_vel_checkbox_1),
 )
+
 grid_layout[6, 0] = pn.Column(
     pn.pane.Bokeh(seg_color_checkbox_1),
     pn.pane.Bokeh(seg_color_radio_1),
     pn.pane.Bokeh(tde_checkbox_1),
     pn.pane.Bokeh(tde_radio_1),
 )
-
 
 # Placing controls for folder 2
 grid_layout[0:1, 1] = pn.Column(
