@@ -611,11 +611,15 @@ mog_vel_checkbox_1.js_on_change(
 # mod_vel_checkbox_1.js_on_change("active", mod_vel_checkbox_callback_1)
 
 velocity_scaler.js_on_change("value", velocity_scaler_callback)
-seg_color_checkbox_1.js_on_change("active", seg_color_checkbox_callback_1)
+seg_color_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": seg_color_obj_1}, code=checkbox_callback_js)
+)
 seg_color_radio_1.js_on_change(
     "active", CustomJS(args=dict(source=segsource), code=slip_component_callback_js)
 )
-tde_checkbox_1.js_on_change("active", tde_checkbox_callback_1)
+tde_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": tde_obj_1}, code=checkbox_callback_js)
+)
 tde_radio_1.js_on_change(
     "active", CustomJS(args=dict(source=tdesource), code=slip_component_callback_js)
 )
