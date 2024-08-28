@@ -716,31 +716,51 @@ checkbox_callback_js = """
 # JavaScript callback for velocity magnitude scaling
 velocity_scaler_callback = CustomJS(
     args=dict(
-        source=stasource_1,
+        source1=stasource_1,
+        source2=stasource_2,
         velocity_scaler=velocity_scaler,
         VELOCITY_SCALE=VELOCITY_SCALE,
     ),
     code="""
     const velocity_scale_slider = velocity_scaler.value
-    const lon = source.data.lon
-    const lat = source.data.lat
-    const obs_east_vel =  source.data.obs_east_vel
-    const obs_north_vel = source.data.obs_north_vel
-    const mod_east_vel =  source.data.mod_east_vel
-    const mod_north_vel = source.data.mod_north_vel
-    const res_east_vel =  source.data.res_east_vel
-    const res_north_vel = source.data.res_north_vel
-    const rot_east_vel =  source.data.rot_east_vel
-    const rot_north_vel = source.data.rot_north_vel
-    const seg_east_vel =  source.data.seg_east_vel
-    const seg_north_vel = source.data.seg_north_vel
-    const tde_east_vel =  source.data.tde_east_vel
-    const tde_north_vel = source.data.tde_north_vel
-    const str_east_vel =  source.data.str_east_vel
-    const str_north_vel = source.data.str_north_vel
-    const mog_east_vel =  source.data.mog_east_vel
-    const mog_north_vel = source.data.mog_north_vel
+    const lon = source1.data.lon
+    const lat = source1.data.lat
+    const obs_east_vel =  source1.data.obs_east_vel
+    const obs_north_vel = source1.data.obs_north_vel
+    const mod_east_vel =  source1.data.mod_east_vel
+    const mod_north_vel = source1.data.mod_north_vel
+    const res_east_vel =  source1.data.res_east_vel
+    const res_north_vel = source1.data.res_north_vel
+    const rot_east_vel =  source1.data.rot_east_vel
+    const rot_north_vel = source1.data.rot_north_vel
+    const seg_east_vel =  source1.data.seg_east_vel
+    const seg_north_vel = source1.data.seg_north_vel
+    const tde_east_vel =  source1.data.tde_east_vel
+    const tde_north_vel = source1.data.tde_north_vel
+    const str_east_vel =  source1.data.str_east_vel
+    const str_north_vel = source1.data.str_north_vel
+    const mog_east_vel =  source1.data.mog_east_vel
+    const mog_north_vel = source1.data.mog_north_vel
     
+    const lon2 = source2.data.lon
+    const lat2 = source2.data.lat
+    const obs_east_vel2 =  source2.data.obs_east_vel
+    const obs_north_vel2 = source2.data.obs_north_vel
+    const mod_east_vel2 =  source2.data.mod_east_vel
+    const mod_north_vel2 = source2.data.mod_north_vel
+    const res_east_vel2 =  source2.data.res_east_vel
+    const res_north_vel2 = source2.data.res_north_vel
+    const rot_east_vel2 =  source2.data.rot_east_vel
+    const rot_north_vel2 = source2.data.rot_north_vel
+    const seg_east_vel2 =  source2.data.seg_east_vel
+    const seg_north_vel2 = source2.data.seg_north_vel
+    const tde_east_vel2 =  source2.data.tde_east_vel
+    const tde_north_vel2 = source2.data.tde_north_vel
+    const str_east_vel2 =  source2.data.str_east_vel
+    const str_north_vel2 = source2.data.str_north_vel
+    const mog_east_vel2 =  source2.data.mog_east_vel
+    const mog_north_vel2 = source2.data.mog_north_vel
+
     // Update velocities with current magnitude scaling
     let obs_east_vel_lon = [];
     let obs_north_vel_lat = [];
@@ -775,12 +795,49 @@ velocity_scaler_callback = CustomJS(
         str_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel[i]);
         mog_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel[i]);
         mog_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel[i]);
+    }
+
+    // Update velocities with current magnitude scaling
+    let obs_east_vel_lon2 = [];
+    let obs_north_vel_lat2 = [];
+    let mod_east_vel_lon2 = [];
+    let mod_north_vel_lat2 = [];
+    let res_east_vel_lon2 = [];
+    let res_north_vel_lat2 = [];
+    let rot_east_vel_lon2 = [];
+    let rot_north_vel_lat2 = [];
+    let seg_east_vel_lon2 = [];
+    let seg_north_vel_lat2 = [];
+    let tde_east_vel_lon2 = [];
+    let tde_north_vel_lat2 = [];
+    let str_east_vel_lon2 = [];
+    let str_north_vel_lat2 = [];
+    let mog_east_vel_lon2 = [];
+    let mog_north_vel_lat2 = [];
+    for (let j = 0; j < lon2.length; j++) {
+        obs_east_vel_lon2.push(lon2[j] + VELOCITY_SCALE * velocity_scale_slider *  obs_east_vel2[j]);
+        obs_north_vel_lat2.push(lat2[j] + VELOCITY_SCALE * velocity_scale_slider * obs_north_vel2[j]);
+        mod_east_vel_lon2.push(lon2[j] + VELOCITY_SCALE * velocity_scale_slider *  mod_east_vel2[j]);
+        mod_north_vel_lat2.push(lat2[j] + VELOCITY_SCALE * velocity_scale_slider * mod_north_vel2[j]);
+        res_east_vel_lon2.push(lon2[j] + VELOCITY_SCALE * velocity_scale_slider *  res_east_vel2[j]);
+        res_north_vel_lat2.push(lat2[j] + VELOCITY_SCALE * velocity_scale_slider * res_north_vel2[j]);
+        rot_east_vel_lon2.push(lon2[j] + VELOCITY_SCALE * velocity_scale_slider *  rot_east_vel2[j]);
+        rot_north_vel_lat2.push(lat2[j] + VELOCITY_SCALE * velocity_scale_slider * rot_north_vel2[j]);
+        seg_east_vel_lon2.push(lon2[j] + VELOCITY_SCALE * velocity_scale_slider *  seg_east_vel2[j]);
+        seg_north_vel_lat2.push(lat2[j] + VELOCITY_SCALE * velocity_scale_slider * seg_north_vel2[j]);
+        tde_east_vel_lon2.push(lon2[j] + VELOCITY_SCALE * velocity_scale_slider *  tde_east_vel2[j]);
+        tde_north_vel_lat2.push(lat2[j] + VELOCITY_SCALE * velocity_scale_slider * tde_north_vel2[j]);
+        str_east_vel_lon2.push(lon2[j] + VELOCITY_SCALE * velocity_scale_slider *  str_east_vel2[j]);
+        str_north_vel_lat2.push(lat2[j] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel2[j]);
+        mog_east_vel_lon2.push(lon2[j] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel2[j]);
+        mog_north_vel_lat2.push(lat2[j] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel2[j]);
     
     }
 
     // Package everthing back into dictionary
     // Try source.change.emit();???
-    source.data = { lon, lat, obs_east_vel, obs_north_vel, obs_east_vel_lon, obs_north_vel_lat, mod_east_vel, mod_north_vel, mod_east_vel_lon, mod_north_vel_lat, res_east_vel, res_north_vel, res_east_vel_lon, res_north_vel_lat, rot_east_vel, rot_north_vel, rot_east_vel_lon, rot_north_vel_lat, seg_east_vel, seg_north_vel, seg_east_vel_lon, seg_north_vel_lat, tde_east_vel, tde_north_vel, tde_east_vel_lon, tde_north_vel_lat, str_east_vel, str_north_vel, str_east_vel_lon, str_north_vel_lat, mog_east_vel, mog_north_vel, mog_east_vel_lon, mog_north_vel_lat}
+    source1.data = { lon, lat, obs_east_vel, obs_north_vel, obs_east_vel_lon, obs_north_vel_lat, mod_east_vel, mod_north_vel, mod_east_vel_lon, mod_north_vel_lat, res_east_vel, res_north_vel, res_east_vel_lon, res_north_vel_lat, rot_east_vel, rot_north_vel, rot_east_vel_lon, rot_north_vel_lat, seg_east_vel, seg_north_vel, seg_east_vel_lon, seg_north_vel_lat, tde_east_vel, tde_north_vel, tde_east_vel_lon, tde_north_vel_lat, str_east_vel, str_north_vel, str_east_vel_lon, str_north_vel_lat, mog_east_vel, mog_north_vel, mog_east_vel_lon, mog_north_vel_lat}
+    source2.data = { lon2, lat2, obs_east_vel2, obs_north_vel2, obs_east_vel_lon2, obs_north_vel_lat2, mod_east_vel2, mod_north_vel2, mod_east_vel_lon2, mod_north_vel_lat2, res_east_vel2, res_north_vel2, res_east_vel_lon2, res_north_vel_lat2, rot_east_vel2, rot_north_vel2, rot_east_vel_lon2, rot_north_vel_lat2, seg_east_vel2, seg_north_vel2, seg_east_vel_lon2, seg_north_vel_lat2, tde_east_vel2, tde_north_vel2, tde_east_vel_lon2, tde_north_vel_lat2, str_east_vel2, str_north_vel2, str_east_vel_lon2, str_north_vel_lat2, mog_east_vel2, mog_north_vel2, mog_east_vel_lon2, mog_north_vel_lat2}
 """,
 )
 
