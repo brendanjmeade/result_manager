@@ -116,7 +116,6 @@ def load_data1():
     root = tk.Tk()
     root.withdraw()  # Hide the root window
     folder_name = filedialog.askdirectory(title="load")
-
     # Set display of folder name
     folder_label_1.text = folder_name.split("/")[-1]
 
@@ -716,31 +715,31 @@ checkbox_callback_js = """
 # JavaScript callback for velocity magnitude scaling
 velocity_scaler_callback = CustomJS(
     args=dict(
-        source=stasource_1,
+        source1=stasource_1,
         velocity_scaler=velocity_scaler,
         VELOCITY_SCALE=VELOCITY_SCALE,
     ),
     code="""
     const velocity_scale_slider = velocity_scaler.value
-    const lon = source.data.lon
-    const lat = source.data.lat
-    const obs_east_vel =  source.data.obs_east_vel
-    const obs_north_vel = source.data.obs_north_vel
-    const mod_east_vel =  source.data.mod_east_vel
-    const mod_north_vel = source.data.mod_north_vel
-    const res_east_vel =  source.data.res_east_vel
-    const res_north_vel = source.data.res_north_vel
-    const rot_east_vel =  source.data.rot_east_vel
-    const rot_north_vel = source.data.rot_north_vel
-    const seg_east_vel =  source.data.seg_east_vel
-    const seg_north_vel = source.data.seg_north_vel
-    const tde_east_vel =  source.data.tde_east_vel
-    const tde_north_vel = source.data.tde_north_vel
-    const str_east_vel =  source.data.str_east_vel
-    const str_north_vel = source.data.str_north_vel
-    const mog_east_vel =  source.data.mog_east_vel
-    const mog_north_vel = source.data.mog_north_vel
-    
+    const lon = source1.data.lon
+    const lat = source1.data.lat
+    const obs_east_vel =  source1.data.obs_east_vel
+    const obs_north_vel = source1.data.obs_north_vel
+    const mod_east_vel =  source1.data.mod_east_vel
+    const mod_north_vel = source1.data.mod_north_vel
+    const res_east_vel =  source1.data.res_east_vel
+    const res_north_vel = source1.data.res_north_vel
+    const rot_east_vel =  source1.data.rot_east_vel
+    const rot_north_vel = source1.data.rot_north_vel
+    const seg_east_vel =  source1.data.seg_east_vel
+    const seg_north_vel = source1.data.seg_north_vel
+    const tde_east_vel =  source1.data.tde_east_vel
+    const tde_north_vel = source1.data.tde_north_vel
+    const str_east_vel =  source1.data.str_east_vel
+    const str_north_vel = source1.data.str_north_vel
+    const mog_east_vel =  source1.data.mog_east_vel
+    const mog_north_vel = source1.data.mog_north_vel
+
     // Update velocities with current magnitude scaling
     let obs_east_vel_lon = [];
     let obs_north_vel_lat = [];
@@ -775,12 +774,11 @@ velocity_scaler_callback = CustomJS(
         str_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel[i]);
         mog_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel[i]);
         mog_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel[i]);
-    
     }
 
     // Package everthing back into dictionary
     // Try source.change.emit();???
-    source.data = { lon, lat, obs_east_vel, obs_north_vel, obs_east_vel_lon, obs_north_vel_lat, mod_east_vel, mod_north_vel, mod_east_vel_lon, mod_north_vel_lat, res_east_vel, res_north_vel, res_east_vel_lon, res_north_vel_lat, rot_east_vel, rot_north_vel, rot_east_vel_lon, rot_north_vel_lat, seg_east_vel, seg_north_vel, seg_east_vel_lon, seg_north_vel_lat, tde_east_vel, tde_north_vel, tde_east_vel_lon, tde_north_vel_lat, str_east_vel, str_north_vel, str_east_vel_lon, str_north_vel_lat, mog_east_vel, mog_north_vel, mog_east_vel_lon, mog_north_vel_lat}
+    source1.data = { lon, lat, obs_east_vel, obs_north_vel, obs_east_vel_lon, obs_north_vel_lat, mod_east_vel, mod_north_vel, mod_east_vel_lon, mod_north_vel_lat, res_east_vel, res_north_vel, res_east_vel_lon, res_north_vel_lat, rot_east_vel, rot_north_vel, rot_east_vel_lon, rot_north_vel_lat, seg_east_vel, seg_north_vel, seg_east_vel_lon, seg_north_vel_lat, tde_east_vel, tde_north_vel, tde_east_vel_lon, tde_north_vel_lat, str_east_vel, str_north_vel, str_east_vel_lon, str_north_vel_lat, mog_east_vel, mog_north_vel, mog_east_vel_lon, mog_north_vel_lat}
 """,
 )
 
