@@ -36,40 +36,40 @@ VELOCITY_SCALE = 0.01
 ##################################
 stasource_1 = ColumnDataSource(
     data={
-        "lon": [],
-        "lat": [],
-        "obs_east_vel": [],
-        "obs_north_vel": [],
-        "obs_east_vel_lon": [],
-        "obs_north_vel_lat": [],
-        "mod_east_vel": [],
-        "mod_north_vel": [],
-        "mod_east_vel_lon": [],
-        "mod_north_vel_lat": [],
-        "res_east_vel": [],
-        "res_north_vel": [],
-        "res_east_vel_lon": [],
-        "res_north_vel_lat": [],
-        "rot_east_vel": [],
-        "rot_north_vel": [],
-        "rot_east_vel_lon": [],
-        "rot_north_vel_lat": [],
-        "seg_east_vel": [],
-        "seg_north_vel": [],
-        "seg_east_vel_lon": [],
-        "seg_north_vel_lat": [],
-        "tde_east_vel": [],
-        "tde_north_vel": [],
-        "tde_east_vel_lon": [],
-        "tde_north_vel_lat": [],
-        "str_east_vel": [],
-        "str_north_vel": [],
-        "str_east_vel_lon": [],
-        "str_north_vel_lat": [],
-        "mog_east_vel": [],
-        "mog_north_vel": [],
-        "mog_east_vel_lon": [],
-        "mog_north_vel_lat": [],
+        "lon_1": [],
+        "lat_1": [],
+        "obs_east_vel_1": [],
+        "obs_north_vel_1": [],
+        "obs_east_vel_lon_1": [],
+        "obs_north_vel_lat_1": [],
+        "mod_east_vel_1": [],
+        "mod_north_vel_1": [],
+        "mod_east_vel_lon_1": [],
+        "mod_north_vel_lat_1": [],
+        "res_east_vel_1": [],
+        "res_north_vel_1": [],
+        "res_east_vel_lon_1": [],
+        "res_north_vel_lat_1": [],
+        "rot_east_vel_1": [],
+        "rot_north_vel_1": [],
+        "rot_east_vel_lon_1": [],
+        "rot_north_vel_lat_1": [],
+        "seg_east_vel_1": [],
+        "seg_north_vel_1": [],
+        "seg_east_vel_lon_1": [],
+        "seg_north_vel_lat_1": [],
+        "tde_east_vel_1": [],
+        "tde_north_vel_1": [],
+        "tde_east_vel_lon_1": [],
+        "tde_north_vel_lat_1": [],
+        "str_east_vel_1": [],
+        "str_north_vel_1": [],
+        "str_east_vel_lon_1": [],
+        "str_north_vel_lat_1": [],
+        "mog_east_vel_1": [],
+        "mog_north_vel_1": [],
+        "mog_east_vel_lon_1": [],
+        "mog_north_vel_lat_1": [],
     }
 )
 
@@ -94,7 +94,44 @@ tdesource_1 = ColumnDataSource(
     },
 )
 # Make copies for folder 2
-stasource_2 = ColumnDataSource(stasource_1.data.copy())
+stasource_2 = ColumnDataSource(
+    data={
+        "lon_2": [],
+        "lat_2": [],
+        "obs_east_vel_2": [],
+        "obs_north_vel_2": [],
+        "obs_east_vel_lon_2": [],
+        "obs_north_vel_lat_2": [],
+        "mod_east_vel_2": [],
+        "mod_north_vel_2": [],
+        "mod_east_vel_lon_2": [],
+        "mod_north_vel_lat_2": [],
+        "res_east_vel_2": [],
+        "res_north_vel_2": [],
+        "res_east_vel_lon_2": [],
+        "res_north_vel_lat_2": [],
+        "rot_east_vel_2": [],
+        "rot_north_vel_2": [],
+        "rot_east_vel_lon_2": [],
+        "rot_north_vel_lat_2": [],
+        "seg_east_vel_2": [],
+        "seg_north_vel_2": [],
+        "seg_east_vel_lon_2": [],
+        "seg_north_vel_lat_2": [],
+        "tde_east_vel_2": [],
+        "tde_north_vel_2": [],
+        "tde_east_vel_lon_2": [],
+        "tde_north_vel_lat_2": [],
+        "str_east_vel_2": [],
+        "str_north_vel_2": [],
+        "str_east_vel_lon_2": [],
+        "str_north_vel_lat_2": [],
+        "mog_east_vel_2": [],
+        "mog_north_vel_2": [],
+        "mog_east_vel_lon_2": [],
+        "mog_north_vel_lat_2": [],
+    }
+)
 segsource_2 = ColumnDataSource(segsource_1.data.copy())
 tdesource_2 = ColumnDataSource(tdesource_1.data.copy())
 
@@ -125,48 +162,50 @@ def load_data1():
     meshes = pd.read_csv(folder_name + "/model_meshes.csv")
 
     stasource_1.data = {
-        "lon": station.lon,
-        "lat": station.lat,
-        "obs_east_vel": station.east_vel,
-        "obs_north_vel": station.north_vel,
-        "obs_east_vel_lon": station.lon + VELOCITY_SCALE * station.east_vel,
-        "obs_north_vel_lat": station.lat + VELOCITY_SCALE * station.north_vel,
-        "mod_east_vel": station.model_east_vel,
-        "mod_north_vel": station.model_north_vel,
-        "mod_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel,
-        "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
-        "res_east_vel": station.model_east_vel_residual,
-        "res_north_vel": station.model_north_vel_residual,
-        "res_east_vel_lon": station.lon
+        "lon_1": station.lon,
+        "lat_1": station.lat,
+        "obs_east_vel_1": station.east_vel,
+        "obs_north_vel_1": station.north_vel,
+        "obs_east_vel_lon_1": station.lon + VELOCITY_SCALE * station.east_vel,
+        "obs_north_vel_lat_1": station.lat + VELOCITY_SCALE * station.north_vel,
+        "mod_east_vel_1": station.model_east_vel,
+        "mod_north_vel_1": station.model_north_vel,
+        "mod_east_vel_lon_1": station.lon + VELOCITY_SCALE * station.model_east_vel,
+        "mod_north_vel_lat_1": station.lat + VELOCITY_SCALE * station.model_north_vel,
+        "res_east_vel_1": station.model_east_vel_residual,
+        "res_north_vel_1": station.model_north_vel_residual,
+        "res_east_vel_lon_1": station.lon
         + VELOCITY_SCALE * station.model_east_vel_residual,
-        "res_north_vel_lat": station.lat
+        "res_north_vel_lat_1": station.lat
         + VELOCITY_SCALE * station.model_north_vel_residual,
-        "rot_east_vel": station.model_east_vel_rotation,
-        "rot_north_vel": station.model_north_vel_rotation,
-        "rot_east_vel_lon": station.lon
+        "rot_east_vel_1": station.model_east_vel_rotation,
+        "rot_north_vel_1": station.model_north_vel_rotation,
+        "rot_east_vel_lon_1": station.lon
         + VELOCITY_SCALE * station.model_east_vel_rotation,
-        "rot_north_vel_lat": station.lat
+        "rot_north_vel_lat_1": station.lat
         + VELOCITY_SCALE * station.model_north_vel_rotation,
-        "seg_east_vel": station.model_east_elastic_segment,
-        "seg_north_vel": station.model_north_elastic_segment,
-        "seg_east_vel_lon": station.lon
+        "seg_east_vel_1": station.model_east_elastic_segment,
+        "seg_north_vel_1": station.model_north_elastic_segment,
+        "seg_east_vel_lon_1": station.lon
         + VELOCITY_SCALE * station.model_east_elastic_segment,
-        "seg_north_vel_lat": station.lat
+        "seg_north_vel_lat_1": station.lat
         + VELOCITY_SCALE * station.model_north_elastic_segment,
-        "tde_east_vel": station.model_east_vel_tde,
-        "tde_north_vel": station.model_north_vel_tde,
-        "tde_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel_tde,
-        "tde_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel_tde,
-        "str_east_vel": station.model_east_vel_block_strain_rate,
-        "str_north_vel": station.model_north_vel_block_strain_rate,
-        "str_east_vel_lon": station.lon
+        "tde_east_vel_1": station.model_east_vel_tde,
+        "tde_north_vel_1": station.model_north_vel_tde,
+        "tde_east_vel_lon_1": station.lon + VELOCITY_SCALE * station.model_east_vel_tde,
+        "tde_north_vel_lat_1": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_tde,
+        "str_east_vel_1": station.model_east_vel_block_strain_rate,
+        "str_north_vel_1": station.model_north_vel_block_strain_rate,
+        "str_east_vel_lon_1": station.lon
         + VELOCITY_SCALE * station.model_east_vel_block_strain_rate,
-        "str_north_vel_lat": station.lat
+        "str_north_vel_lat_1": station.lat
         + VELOCITY_SCALE * station.model_north_vel_block_strain_rate,
-        "mog_east_vel": station.model_east_vel_mogi,
-        "mog_north_vel": station.model_north_vel_mogi,
-        "mog_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel_mogi,
-        "mog_north_vel_lat": station.lat
+        "mog_east_vel_1": station.model_east_vel_mogi,
+        "mog_north_vel_1": station.model_north_vel_mogi,
+        "mog_east_vel_lon_1": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_mogi,
+        "mog_north_vel_lat_1": station.lat
         + VELOCITY_SCALE * station.model_north_vel_mogi,
     }
 
@@ -218,48 +257,50 @@ def load_data2():
     meshes = pd.read_csv(folder_name + "/model_meshes.csv")
 
     stasource_2.data = {
-        "lon": station.lon,
-        "lat": station.lat,
-        "obs_east_vel": station.east_vel,
-        "obs_north_vel": station.north_vel,
-        "obs_east_vel_lon": station.lon + VELOCITY_SCALE * station.east_vel,
-        "obs_north_vel_lat": station.lat + VELOCITY_SCALE * station.north_vel,
-        "mod_east_vel": station.model_east_vel,
-        "mod_north_vel": station.model_north_vel,
-        "mod_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel,
-        "mod_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel,
-        "res_east_vel": station.model_east_vel_residual,
-        "res_north_vel": station.model_north_vel_residual,
-        "res_east_vel_lon": station.lon
+        "lon_2": station.lon,
+        "lat_2": station.lat,
+        "obs_east_vel_2": station.east_vel,
+        "obs_north_vel_2": station.north_vel,
+        "obs_east_vel_lon_2": station.lon + VELOCITY_SCALE * station.east_vel,
+        "obs_north_vel_lat_2": station.lat + VELOCITY_SCALE * station.north_vel,
+        "mod_east_vel_2": station.model_east_vel,
+        "mod_north_vel_2": station.model_north_vel,
+        "mod_east_vel_lon_2": station.lon + VELOCITY_SCALE * station.model_east_vel,
+        "mod_north_vel_lat_2": station.lat + VELOCITY_SCALE * station.model_north_vel,
+        "res_east_vel_2": station.model_east_vel_residual,
+        "res_north_vel_2": station.model_north_vel_residual,
+        "res_east_vel_lon_2": station.lon
         + VELOCITY_SCALE * station.model_east_vel_residual,
-        "res_north_vel_lat": station.lat
+        "res_north_vel_lat_2": station.lat
         + VELOCITY_SCALE * station.model_north_vel_residual,
-        "rot_east_vel": station.model_east_vel_rotation,
-        "rot_north_vel": station.model_north_vel_rotation,
-        "rot_east_vel_lon": station.lon
+        "rot_east_vel_2": station.model_east_vel_rotation,
+        "rot_north_vel_2": station.model_north_vel_rotation,
+        "rot_east_vel_lon_2": station.lon
         + VELOCITY_SCALE * station.model_east_vel_rotation,
-        "rot_north_vel_lat": station.lat
+        "rot_north_vel_lat_2": station.lat
         + VELOCITY_SCALE * station.model_north_vel_rotation,
-        "seg_east_vel": station.model_east_elastic_segment,
-        "seg_north_vel": station.model_north_elastic_segment,
-        "seg_east_vel_lon": station.lon
+        "seg_east_vel_2": station.model_east_elastic_segment,
+        "seg_north_vel_2": station.model_north_elastic_segment,
+        "seg_east_vel_lon_2": station.lon
         + VELOCITY_SCALE * station.model_east_elastic_segment,
-        "seg_north_vel_lat": station.lat
+        "seg_north_vel_lat_2": station.lat
         + VELOCITY_SCALE * station.model_north_elastic_segment,
-        "tde_east_vel": station.model_east_vel_tde,
-        "tde_north_vel": station.model_north_vel_tde,
-        "tde_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel_tde,
-        "tde_north_vel_lat": station.lat + VELOCITY_SCALE * station.model_north_vel_tde,
-        "str_east_vel": station.model_east_vel_block_strain_rate,
-        "str_north_vel": station.model_north_vel_block_strain_rate,
-        "str_east_vel_lon": station.lon
+        "tde_east_vel_2": station.model_east_vel_tde,
+        "tde_north_vel_2": station.model_north_vel_tde,
+        "tde_east_vel_lon_2": station.lon + VELOCITY_SCALE * station.model_east_vel_tde,
+        "tde_north_vel_lat_2": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_tde,
+        "str_east_vel_2": station.model_east_vel_block_strain_rate,
+        "str_north_vel_2": station.model_north_vel_block_strain_rate,
+        "str_east_vel_lon_2": station.lon
         + VELOCITY_SCALE * station.model_east_vel_block_strain_rate,
-        "str_north_vel_lat": station.lat
+        "str_north_vel_lat_2": station.lat
         + VELOCITY_SCALE * station.model_north_vel_block_strain_rate,
-        "mog_east_vel": station.model_east_vel_mogi,
-        "mog_north_vel": station.model_north_vel_mogi,
-        "mog_east_vel_lon": station.lon + VELOCITY_SCALE * station.model_east_vel_mogi,
-        "mog_north_vel_lat": station.lat
+        "mog_east_vel_2": station.model_east_vel_mogi,
+        "mog_north_vel_2": station.model_north_vel_mogi,
+        "mog_east_vel_lon_2": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_mogi,
+        "mog_north_vel_lat_2": station.lat
         + VELOCITY_SCALE * station.model_north_vel_mogi,
     }
 
@@ -481,15 +522,15 @@ fig.line(
 
 # Create glyphs all potential plotting elements and hide them as default
 loc_obj_1 = fig.scatter(
-    "lon", "lat", source=stasource_1, size=1, color="black", visible=False
+    "lon_1", "lat_1", source=stasource_1, size=1, color="black", visible=False
 )
 
 # Folder 1: observed velocities
 obs_vel_obj_1 = fig.segment(
-    "lon",
-    "lat",
-    "obs_east_vel_lon",
-    "obs_north_vel_lat",
+    "lon_1",
+    "lat_1",
+    "obs_east_vel_lon_1",
+    "obs_north_vel_lat_1",
     source=stasource_1,
     line_width=1,
     color=obs_color_1,
@@ -499,10 +540,10 @@ obs_vel_obj_1 = fig.segment(
 
 # Folder 1: modeled velocities
 mod_vel_obj_1 = fig.segment(
-    "lon",
-    "lat",
-    "mod_east_vel_lon",
-    "mod_north_vel_lat",
+    "lon_1",
+    "lat_1",
+    "mod_east_vel_lon_1",
+    "mod_north_vel_lat_1",
     source=stasource_1,
     line_width=1,
     color=mod_color_1,
@@ -512,10 +553,10 @@ mod_vel_obj_1 = fig.segment(
 
 # Folder 1: residual velocities
 res_vel_obj_1 = fig.segment(
-    "lon",
-    "lat",
-    "res_east_vel_lon",
-    "res_north_vel_lat",
+    "lon_1",
+    "lat_1",
+    "res_east_vel_lon_1",
+    "res_north_vel_lat_1",
     source=stasource_1,
     line_width=1,
     color=res_color_1,
@@ -524,10 +565,10 @@ res_vel_obj_1 = fig.segment(
 
 # Folder 1: rotation velocities
 rot_vel_obj_1 = fig.segment(
-    "lon",
-    "lat",
-    "rot_east_vel_lon",
-    "rot_north_vel_lat",
+    "lon_1",
+    "lat_1",
+    "rot_east_vel_lon_1",
+    "rot_north_vel_lat_1",
     source=stasource_1,
     line_width=1,
     color=rot_color_1,
@@ -536,10 +577,10 @@ rot_vel_obj_1 = fig.segment(
 
 # Folder 1: elastic velocities
 seg_vel_obj_1 = fig.segment(
-    "lon",
-    "lat",
-    "seg_east_vel_lon",
-    "seg_north_vel_lat",
+    "lon_1",
+    "lat_1",
+    "seg_east_vel_lon_1",
+    "seg_north_vel_lat_1",
     source=stasource_1,
     line_width=1,
     color=seg_color_1,
@@ -548,10 +589,10 @@ seg_vel_obj_1 = fig.segment(
 
 # Folder 1: tde velocities
 tde_vel_obj_1 = fig.segment(
-    "lon",
-    "lat",
-    "tde_east_vel_lon",
-    "tde_north_vel_lat",
+    "lon_1",
+    "lat_1",
+    "tde_east_vel_lon_1",
+    "tde_north_vel_lat_1",
     source=stasource_1,
     line_width=1,
     color=tde_color_1,
@@ -561,10 +602,10 @@ tde_vel_obj_1 = fig.segment(
 
 # Folder 1: strain velocities
 str_vel_obj_1 = fig.segment(
-    "lon",
-    "lat",
-    "str_east_vel_lon",
-    "str_north_vel_lat",
+    "lon_1",
+    "lat_1",
+    "str_east_vel_lon_1",
+    "str_north_vel_lat_1",
     source=stasource_1,
     line_width=1,
     color=str_color_1,
@@ -574,10 +615,10 @@ str_vel_obj_1 = fig.segment(
 
 # Folder 1: mogi velocities
 mog_vel_obj_1 = fig.segment(
-    "lon",
-    "lat",
-    "mog_east_vel_lon",
-    "mog_north_vel_lat",
+    "lon_1",
+    "lat_1",
+    "mog_east_vel_lon_1",
+    "mog_north_vel_lat_1",
     source=stasource_1,
     line_width=1,
     color=mog_color_1,
@@ -600,15 +641,15 @@ str_color_2 = RGB(r=0, g=102, b=102)
 mog_color_2 = RGB(r=102, g=102, b=102)
 
 loc_obj_2 = fig.scatter(
-    "lon", "lat", source=stasource_2, size=1, color="black", visible=False
+    "lon_2", "lat_2", source=stasource_2, size=1, color="black", visible=False
 )
 
-# Folder 1: observed velocities
+# Folder 2: observed velocities
 obs_vel_obj_2 = fig.segment(
-    "lon",
-    "lat",
-    "obs_east_vel_lon",
-    "obs_north_vel_lat",
+    "lon_2",
+    "lat_2",
+    "obs_east_vel_lon_2",
+    "obs_north_vel_lat_2",
     source=stasource_2,
     line_width=1,
     color=obs_color_2,
@@ -616,12 +657,12 @@ obs_vel_obj_2 = fig.segment(
     visible=False,
 )
 
-# Folder 1: modeled velocities
+# Folder 2: modeled velocities
 mod_vel_obj_2 = fig.segment(
-    "lon",
-    "lat",
-    "mod_east_vel_lon",
-    "mod_north_vel_lat",
+    "lon_2",
+    "lat_2",
+    "mod_east_vel_lon_2",
+    "mod_north_vel_lat_2",
     source=stasource_2,
     line_width=1,
     color=mod_color_2,
@@ -629,48 +670,48 @@ mod_vel_obj_2 = fig.segment(
     visible=False,
 )
 
-# Folder 1: residual velocities
+# Folder 2: residual velocities
 res_vel_obj_2 = fig.segment(
-    "lon",
-    "lat",
-    "res_east_vel_lon",
-    "res_north_vel_lat",
+    "lon_2",
+    "lat_2",
+    "res_east_vel_lon_2",
+    "res_north_vel_lat_2",
     source=stasource_2,
     line_width=1,
     color=res_color_2,
     visible=False,
 )
 
-# Folder 1: rotation velocities
+# Folder 2: rotation velocities
 rot_vel_obj_2 = fig.segment(
-    "lon",
-    "lat",
-    "rot_east_vel_lon",
-    "rot_north_vel_lat",
+    "lon_2",
+    "lat_2",
+    "rot_east_vel_lon_2",
+    "rot_north_vel_lat_2",
     source=stasource_2,
     line_width=1,
     color=rot_color_2,
     visible=False,
 )
 
-# Folder 1: elastic velocities
+# Folder 2: elastic velocities
 seg_vel_obj_2 = fig.segment(
-    "lon",
-    "lat",
-    "seg_east_vel_lon",
-    "seg_north_vel_lat",
+    "lon_2",
+    "lat_2",
+    "seg_east_vel_lon_2",
+    "seg_north_vel_lat_2",
     source=stasource_2,
     line_width=1,
     color=seg_color_2,
     visible=False,
 )
 
-# Folder 1: tde velocities
+# Folder 2: tde velocities
 tde_vel_obj_2 = fig.segment(
-    "lon",
-    "lat",
-    "tde_east_vel_lon",
-    "tde_north_vel_lat",
+    "lon_2",
+    "lat_2",
+    "tde_east_vel_lon_2",
+    "tde_north_vel_lat_2",
     source=stasource_2,
     line_width=1,
     color=tde_color_2,
@@ -678,12 +719,12 @@ tde_vel_obj_2 = fig.segment(
     visible=False,
 )
 
-# Folder 1: strain velocities
+# Folder 2: strain velocities
 str_vel_obj_2 = fig.segment(
-    "lon",
-    "lat",
-    "str_east_vel_lon",
-    "str_north_vel_lat",
+    "lon_2",
+    "lat_2",
+    "str_east_vel_lon_2",
+    "str_north_vel_lat_2",
     source=stasource_2,
     line_width=1,
     color=str_color_2,
@@ -691,12 +732,12 @@ str_vel_obj_2 = fig.segment(
     visible=False,
 )
 
-# Folder 1: mogi velocities
+# Folder 2: mogi velocities
 mog_vel_obj_2 = fig.segment(
-    "lon",
-    "lat",
-    "mog_east_vel_lon",
-    "mog_north_vel_lat",
+    "lon_2",
+    "lat_2",
+    "mog_east_vel_lon_2",
+    "mog_north_vel_lat_2",
     source=stasource_2,
     line_width=1,
     color=mog_color_2,
@@ -717,69 +758,126 @@ checkbox_callback_js = """
 velocity_scaler_callback = CustomJS(
     args=dict(
         source1=stasource_1,
+        source2=stasource_2,
         velocity_scaler=velocity_scaler,
         VELOCITY_SCALE=VELOCITY_SCALE,
     ),
     code="""
     const velocity_scale_slider = velocity_scaler.value
-    const lon = source1.data.lon
-    const lat = source1.data.lat
-    const obs_east_vel =  source1.data.obs_east_vel
-    const obs_north_vel = source1.data.obs_north_vel
-    const mod_east_vel =  source1.data.mod_east_vel
-    const mod_north_vel = source1.data.mod_north_vel
-    const res_east_vel =  source1.data.res_east_vel
-    const res_north_vel = source1.data.res_north_vel
-    const rot_east_vel =  source1.data.rot_east_vel
-    const rot_north_vel = source1.data.rot_north_vel
-    const seg_east_vel =  source1.data.seg_east_vel
-    const seg_north_vel = source1.data.seg_north_vel
-    const tde_east_vel =  source1.data.tde_east_vel
-    const tde_north_vel = source1.data.tde_north_vel
-    const str_east_vel =  source1.data.str_east_vel
-    const str_north_vel = source1.data.str_north_vel
-    const mog_east_vel =  source1.data.mog_east_vel
-    const mog_north_vel = source1.data.mog_north_vel
+    const lon_1 = source1.data.lon_1
+    const lat_1 = source1.data.lat_1
+    const obs_east_vel_1 =  source1.data.obs_east_vel_1
+    const obs_north_vel_1 = source1.data.obs_north_vel_1
+    const mod_east_vel_1 =  source1.data.mod_east_vel_1
+    const mod_north_vel_1 = source1.data.mod_north_vel_1
+    const res_east_vel_1 =  source1.data.res_east_vel_1
+    const res_north_vel_1 = source1.data.res_north_vel_1
+    const rot_east_vel_1 =  source1.data.rot_east_vel_1
+    const rot_north_vel_1 = source1.data.rot_north_vel_1
+    const seg_east_vel_1 =  source1.data.seg_east_vel_1
+    const seg_north_vel_1 = source1.data.seg_north_vel_1
+    const tde_east_vel_1 =  source1.data.tde_east_vel_1
+    const tde_north_vel_1 = source1.data.tde_north_vel_1
+    const str_east_vel_1 =  source1.data.str_east_vel_1
+    const str_north_vel_1 = source1.data.str_north_vel_1
+    const mog_east_vel_1 =  source1.data.mog_east_vel_1
+    const mog_north_vel_1 = source1.data.mog_north_vel_1
+    
+    const lon_2 = source2.data.lon_2
+    const lat_2 = source2.data.lat_2
+    const obs_east_vel_2 =  source2.data.obs_east_vel_2
+    const obs_north_vel_2 = source2.data.obs_north_vel_2
+    const mod_east_vel_2 =  source2.data.mod_east_vel_2
+    const mod_north_vel_2 = source2.data.mod_north_vel_2
+    const res_east_vel_2 =  source2.data.res_east_vel_2
+    const res_north_vel_2 = source2.data.res_north_vel_2
+    const rot_east_vel_2 =  source2.data.rot_east_vel_2
+    const rot_north_vel_2 = source2.data.rot_north_vel_2
+    const seg_east_vel_2 =  source2.data.seg_east_vel_2
+    const seg_north_vel_2 = source2.data.seg_north_vel_2
+    const tde_east_vel_2 =  source2.data.tde_east_vel_2
+    const tde_north_vel_2 = source2.data.tde_north_vel_2
+    const str_east_vel_2 =  source2.data.str_east_vel_2
+    const str_north_vel_2 = source2.data.str_north_vel_2
+    const mog_east_vel_2 =  source2.data.mog_east_vel_2
+    const mog_north_vel_2 = source2.data.mog_north_vel_2
 
     // Update velocities with current magnitude scaling
-    let obs_east_vel_lon = [];
-    let obs_north_vel_lat = [];
-    let mod_east_vel_lon = [];
-    let mod_north_vel_lat = [];
-    let res_east_vel_lon = [];
-    let res_north_vel_lat = [];
-    let rot_east_vel_lon = [];
-    let rot_north_vel_lat = [];
-    let seg_east_vel_lon = [];
-    let seg_north_vel_lat = [];
-    let tde_east_vel_lon = [];
-    let tde_north_vel_lat = [];
-    let str_east_vel_lon = [];
-    let str_north_vel_lat = [];
-    let mog_east_vel_lon = [];
-    let mog_north_vel_lat = [];
-    for (let i = 0; i < lon.length; i++) {
-        obs_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  obs_east_vel[i]);
-        obs_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * obs_north_vel[i]);
-        mod_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  mod_east_vel[i]);
-        mod_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * mod_north_vel[i]);
-        res_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  res_east_vel[i]);
-        res_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * res_north_vel[i]);
-        rot_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  rot_east_vel[i]);
-        rot_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * rot_north_vel[i]);
-        seg_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  seg_east_vel[i]);
-        seg_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * seg_north_vel[i]);
-        tde_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  tde_east_vel[i]);
-        tde_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * tde_north_vel[i]);
-        str_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  str_east_vel[i]);
-        str_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel[i]);
-        mog_east_vel_lon.push(lon[i] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel[i]);
-        mog_north_vel_lat.push(lat[i] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel[i]);
+    let obs_east_vel_lon_1 = [];
+    let obs_north_vel_lat_1 = [];
+    let mod_east_vel_lon_1 = [];
+    let mod_north_vel_lat_1 = [];
+    let res_east_vel_lon_1 = [];
+    let res_north_vel_lat_1 = [];
+    let rot_east_vel_lon_1 = [];
+    let rot_north_vel_lat_1 = [];
+    let seg_east_vel_lon_1 = [];
+    let seg_north_vel_lat_1 = [];
+    let tde_east_vel_lon_1 = [];
+    let tde_north_vel_lat_1 = [];
+    let str_east_vel_lon_1 = [];
+    let str_north_vel_lat_1 = [];
+    let mog_east_vel_lon_1 = [];
+    let mog_north_vel_lat_1 = [];
+    for (let i = 0; i < lon_1.length; i++) {
+        obs_east_vel_lon_1.push(lon_1[i] + VELOCITY_SCALE * velocity_scale_slider *  obs_east_vel_1[i]);
+        obs_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * obs_north_vel_1[i]);
+        mod_east_vel_lon_1.push(lon_1[i] + VELOCITY_SCALE * velocity_scale_slider *  mod_east_vel_1[i]);
+        mod_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * mod_north_vel_1[i]);
+        res_east_vel_lon_1.push(lon_1[i] + VELOCITY_SCALE * velocity_scale_slider *  res_east_vel_1[i]);
+        res_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * res_north_vel_1[i]);
+        rot_east_vel_lon_1.push(lon_1[i] + VELOCITY_SCALE * velocity_scale_slider *  rot_east_vel_1[i]);
+        rot_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * rot_north_vel_1[i]);
+        seg_east_vel_lon_1.push(lon_1[i] + VELOCITY_SCALE * velocity_scale_slider *  seg_east_vel_1[i]);
+        seg_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * seg_north_vel_1[i]);
+        tde_east_vel_lon_1.push(lon_1[i] + VELOCITY_SCALE * velocity_scale_slider *  tde_east_vel_1[i]);
+        tde_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * tde_north_vel_1[i]);
+        str_east_vel_lon_1.push(lon_1[i] + VELOCITY_SCALE * velocity_scale_slider *  str_east_vel_1[i]);
+        str_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel_1[i]);
+        mog_east_vel_lon_1.push(lon_1[i] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel_1[i]);
+        mog_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel_1[i]);
+    }
+
+    // Update velocities with current magnitude scaling
+    let obs_east_vel_lon_2 = [];
+    let obs_north_vel_lat_2 = [];
+    let mod_east_vel_lon_2 = [];
+    let mod_north_vel_lat_2 = [];
+    let res_east_vel_lon_2 = [];
+    let res_north_vel_lat_2 = [];
+    let rot_east_vel_lon_2 = [];
+    let rot_north_vel_lat_2 = [];
+    let seg_east_vel_lon_2 = [];
+    let seg_north_vel_lat_2 = [];
+    let tde_east_vel_lon_2 = [];
+    let tde_north_vel_lat_2 = [];
+    let str_east_vel_lon_2 = [];
+    let str_north_vel_lat_2 = [];
+    let mog_east_vel_lon_2 = [];
+    let mog_north_vel_lat_2 = [];
+    for (let j = 0; j < lon_2.length; j++) {
+        obs_east_vel_lon_2.push(lon_2[j] + VELOCITY_SCALE * velocity_scale_slider *  obs_east_vel_2[j]);
+        obs_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * obs_north_vel_2[j]);
+        mod_east_vel_lon_2.push(lon_2[j] + VELOCITY_SCALE * velocity_scale_slider *  mod_east_vel_2[j]);
+        mod_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * mod_north_vel_2[j]);
+        res_east_vel_lon_2.push(lon_2[j] + VELOCITY_SCALE * velocity_scale_slider *  res_east_vel_2[j]);
+        res_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * res_north_vel_2[j]);
+        rot_east_vel_lon_2.push(lon_2[j] + VELOCITY_SCALE * velocity_scale_slider *  rot_east_vel_2[j]);
+        rot_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * rot_north_vel_2[j]);
+        seg_east_vel_lon_2.push(lon_2[j] + VELOCITY_SCALE * velocity_scale_slider *  seg_east_vel_2[j]);
+        seg_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * seg_north_vel_2[j]);
+        tde_east_vel_lon_2.push(lon_2[j] + VELOCITY_SCALE * velocity_scale_slider *  tde_east_vel_2[j]);
+        tde_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * tde_north_vel_2[j]);
+        str_east_vel_lon_2.push(lon_2[j] + VELOCITY_SCALE * velocity_scale_slider *  str_east_vel_2[j]);
+        str_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel_2[j]);
+        mog_east_vel_lon_2.push(lon_2[j] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel_2[j]);
+        mog_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel_2[j]);
     }
 
     // Package everthing back into dictionary
     // Try source.change.emit();???
-    source1.data = { lon, lat, obs_east_vel, obs_north_vel, obs_east_vel_lon, obs_north_vel_lat, mod_east_vel, mod_north_vel, mod_east_vel_lon, mod_north_vel_lat, res_east_vel, res_north_vel, res_east_vel_lon, res_north_vel_lat, rot_east_vel, rot_north_vel, rot_east_vel_lon, rot_north_vel_lat, seg_east_vel, seg_north_vel, seg_east_vel_lon, seg_north_vel_lat, tde_east_vel, tde_north_vel, tde_east_vel_lon, tde_north_vel_lat, str_east_vel, str_north_vel, str_east_vel_lon, str_north_vel_lat, mog_east_vel, mog_north_vel, mog_east_vel_lon, mog_north_vel_lat}
+    source1.data = { lon_1, lat_1, obs_east_vel_1, obs_north_vel_1, obs_east_vel_lon_1, obs_north_vel_lat_1, mod_east_vel_1, mod_north_vel_1, mod_east_vel_lon_1, mod_north_vel_lat_1, res_east_vel_1, res_north_vel_1, res_east_vel_lon_1, res_north_vel_lat_1, rot_east_vel_1, rot_north_vel_1, rot_east_vel_lon_1, rot_north_vel_lat_1, seg_east_vel_1, seg_north_vel_1, seg_east_vel_lon_1, seg_north_vel_lat_1, tde_east_vel_1, tde_north_vel_1, tde_east_vel_lon_1, tde_north_vel_lat_1, str_east_vel_1, str_north_vel_1, str_east_vel_lon_1, str_north_vel_lat_1, mog_east_vel_1, mog_north_vel_1, mog_east_vel_lon_1, mog_north_vel_lat_1}
+    source2.data = { lon_2, lat_2, obs_east_vel_2, obs_north_vel_2, obs_east_vel_lon_2, obs_north_vel_lat_2, mod_east_vel_2, mod_north_vel_2, mod_east_vel_lon_2, mod_north_vel_lat_2, res_east_vel_2, res_north_vel_2, res_east_vel_lon_2, res_north_vel_lat_2, rot_east_vel_2, rot_north_vel_2, rot_east_vel_lon_2, rot_north_vel_lat_2, seg_east_vel_2, seg_north_vel_2, seg_east_vel_lon_2, seg_north_vel_lat_2, tde_east_vel_2, tde_north_vel_2, tde_east_vel_lon_2, tde_north_vel_lat_2, str_east_vel_2, str_north_vel_2, str_east_vel_lon_2, str_north_vel_lat_2, mog_east_vel_2, mog_north_vel_2, mog_east_vel_lon_2, mog_north_vel_lat_2}
 """,
 )
 
