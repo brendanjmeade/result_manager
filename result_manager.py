@@ -308,9 +308,10 @@ folder_load_button_2.on_click(load_data2)
 # Figure setup #
 ################
 def get_coastlines():
-    COASTLINES = scipy.io.loadmat("coastlines.mat")
-    COASTLINES["lon"] = COASTLINES["lon"].flatten()
-    COASTLINES["lat"] = COASTLINES["lat"].flatten()
+    # COASTLINES = scipy.io.loadmat("coastlines.mat")
+    # COASTLINES["lon"] = COASTLINES["lon"].flatten()
+    # COASTLINES["lat"] = COASTLINES["lat"].flatten()
+    COASTLINES = np.load("GSHHS_c_L1_0_360.npz")
     return COASTLINES
 
 
