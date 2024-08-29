@@ -153,7 +153,6 @@ def load_data1():
     root = tk.Tk()
     root.withdraw()  # Hide the root window
     folder_name = filedialog.askdirectory(title="load")
-
     # Set display of folder name
     folder_label_1.text = folder_name.split("/")[-1]
 
@@ -350,9 +349,10 @@ folder_load_button_2.on_click(load_data2)
 # Figure setup #
 ################
 def get_coastlines():
-    COASTLINES = scipy.io.loadmat("coastlines.mat")
-    COASTLINES["lon"] = COASTLINES["lon"].flatten()
-    COASTLINES["lat"] = COASTLINES["lat"].flatten()
+    # COASTLINES = scipy.io.loadmat("coastlines.mat")
+    # COASTLINES["lon"] = COASTLINES["lon"].flatten()
+    # COASTLINES["lat"] = COASTLINES["lat"].flatten()
+    COASTLINES = np.load("GSHHS_c_L1_0_360.npz")
     return COASTLINES
 
 
