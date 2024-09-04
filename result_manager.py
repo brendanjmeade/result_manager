@@ -24,7 +24,7 @@ from bokeh.models import (
     ColorBar,
     LinearColorMapper,
 )
-from bokeh.palettes import brewer
+from bokeh.palettes import brewer, viridis
 from bokeh.colors import RGB
 
 pn.extension()
@@ -70,6 +70,7 @@ stasource_1 = ColumnDataSource(
         "mog_north_vel_1": [],
         "mog_east_vel_lon_1": [],
         "mog_north_vel_lat_1": [],
+        "res_mag_1": [],
     }
 )
 
@@ -130,6 +131,7 @@ stasource_2 = ColumnDataSource(
         "mog_north_vel_2": [],
         "mog_east_vel_lon_2": [],
         "mog_north_vel_lat_2": [],
+        "res_mag_2": [],
     }
 )
 segsource_2 = ColumnDataSource(segsource_1.data.copy())
@@ -158,6 +160,10 @@ def load_data1():
 
     # Read model out put as dataframes
     station = pd.read_csv(folder_name + "/model_station.csv")
+    resmag = np.sqrt(
+        np.power(station.model_east_vel_residual, 2)
+        + np.power(station.model_north_vel_residual, 2)
+    )
     segment = pd.read_csv(folder_name + "/model_segment.csv")
     meshes = pd.read_csv(folder_name + "/model_meshes.csv")
 
@@ -207,6 +213,7 @@ def load_data1():
         + VELOCITY_SCALE * station.model_east_vel_mogi,
         "mog_north_vel_lat_1": station.lat
         + VELOCITY_SCALE * station.model_north_vel_mogi,
+        "res_mag_1": resmag,
     }
 
     # Source for block bounding segments. Dict of length n_segments
@@ -253,6 +260,10 @@ def load_data2():
 
     # Read model out put as dataframes
     station = pd.read_csv(folder_name + "/model_station.csv")
+    resmag = np.sqrt(
+        np.power(station.model_east_vel_residual, 2)
+        + np.power(station.model_north_vel_residual, 2)
+    )
     segment = pd.read_csv(folder_name + "/model_segment.csv")
     meshes = pd.read_csv(folder_name + "/model_meshes.csv")
 
@@ -302,6 +313,7 @@ def load_data2():
         + VELOCITY_SCALE * station.model_east_vel_mogi,
         "mog_north_vel_lat_2": station.lat
         + VELOCITY_SCALE * station.model_north_vel_mogi,
+        "res_mag_2": resmag,
     }
 
     # Source for block bounding segments. Dict of length n_segments
@@ -376,6 +388,9 @@ grid_layout = pn.GridSpec(sizing_mode="stretch_both", max_height=600)
 # Slip rate color mapper
 slip_color_mapper = LinearColorMapper(palette=brewer["RdBu"][11], low=-100, high=100)
 
+# Residual magnitude color mapper
+resmag_color_mapper = LinearColorMapper(palette=viridis(10), low=0, high=5)
+
 ##############
 # UI objects #
 ##############
@@ -392,6 +407,7 @@ seg_vel_checkbox_1 = CheckboxGroup(labels=["seg"], active=[])
 tde_vel_checkbox_1 = CheckboxGroup(labels=["tri"], active=[])
 str_vel_checkbox_1 = CheckboxGroup(labels=["str"], active=[])
 mog_vel_checkbox_1 = CheckboxGroup(labels=["mog"], active=[])
+res_mag_checkbox_1 = CheckboxGroup(labels=["res mag"], active=[])
 
 ss_text_checkbox_1 = CheckboxGroup(labels=["ss"], active=[])
 ds_text_checkbox_1 = CheckboxGroup(labels=["ds"], active=[])
@@ -419,6 +435,7 @@ seg_vel_checkbox_2 = CheckboxGroup(labels=["seg"], active=[])
 tde_vel_checkbox_2 = CheckboxGroup(labels=["tri"], active=[])
 str_vel_checkbox_2 = CheckboxGroup(labels=["str"], active=[])
 mog_vel_checkbox_2 = CheckboxGroup(labels=["mog"], active=[])
+res_mag_checkbox_2 = CheckboxGroup(labels=["res mag"], active=[])
 
 seg_text_checkbox_2 = CheckboxGroup(labels=["slip"], active=[])
 seg_text_radio_2 = RadioButtonGroup(labels=["ss", "ds"], active=0)
@@ -626,6 +643,16 @@ mog_vel_obj_1 = fig.segment(
     visible=False,
 )
 
+# Folder 1: residual magnitudes
+res_mag_obj_1 = fig.scatter(
+    "lon_1",
+    "lat_1",
+    source=stasource_1,
+    size=3,
+    color={"field": "res_mag_1", "transform": resmag_color_mapper},
+    visible=False,
+)
+
 ############
 # Folder 2 #
 ############
@@ -742,6 +769,16 @@ mog_vel_obj_2 = fig.segment(
     line_width=1,
     color=mog_color_2,
     alpha=0.5,
+    visible=False,
+)
+
+# Folder 2: residual magnitudes
+res_mag_obj_2 = fig.scatter(
+    "lon_2",
+    "lat_2",
+    source=stasource_2,
+    size=3,
+    color={"field": "res_mag_2", "transform": resmag_color_mapper},
     visible=False,
 )
 
@@ -930,6 +967,9 @@ str_vel_checkbox_1.js_on_change(
 mog_vel_checkbox_1.js_on_change(
     "active", CustomJS(args={"plot_object": mog_vel_obj_1}, code=checkbox_callback_js)
 )
+res_mag_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": res_mag_obj_1}, code=checkbox_callback_js)
+)
 seg_color_checkbox_1.js_on_change(
     "active", CustomJS(args={"plot_object": seg_color_obj_1}, code=checkbox_callback_js)
 )
@@ -971,6 +1011,9 @@ str_vel_checkbox_2.js_on_change(
 mog_vel_checkbox_2.js_on_change(
     "active", CustomJS(args={"plot_object": mog_vel_obj_2}, code=checkbox_callback_js)
 )
+res_mag_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": res_mag_obj_2}, code=checkbox_callback_js)
+)
 seg_color_checkbox_2.js_on_change(
     "active", CustomJS(args={"plot_object": seg_color_obj_2}, code=checkbox_callback_js)
 )
@@ -1010,6 +1053,7 @@ grid_layout[0:1, 0] = pn.Column(
     pn.pane.Bokeh(tde_vel_checkbox_1),
     pn.pane.Bokeh(str_vel_checkbox_1),
     pn.pane.Bokeh(mog_vel_checkbox_1),
+    pn.pane.Bokeh(res_mag_checkbox_1),
 )
 
 grid_layout[6, 0] = pn.Column(
@@ -1032,6 +1076,7 @@ grid_layout[0:1, 1] = pn.Column(
     pn.pane.Bokeh(tde_vel_checkbox_2),
     pn.pane.Bokeh(str_vel_checkbox_2),
     pn.pane.Bokeh(mog_vel_checkbox_2),
+    pn.pane.Bokeh(res_mag_checkbox_2),
 )
 
 grid_layout[6, 1] = pn.Column(
