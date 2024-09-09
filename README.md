@@ -1,4 +1,4 @@
-!([https://private-user-images.githubusercontent.com/4225359/363271379-f93c61d5-2c22-4477-88a6-433db0ebf7cd.png](https://github.com/brendanjmeade/result_manager/blob/main/assets/result_manager_screenshot.png))
+[https://private-user-images.githubusercontent.com/4225359/363271379-f93c61d5-2c22-4477-88a6-433db0ebf7cd.png](https://github.com/brendanjmeade/result_manager/blob/main/assets/result_manager_screenshot.png))
 
 Graphical result view for model output from: https://github.com/brendanjmeade/celeri.
 
