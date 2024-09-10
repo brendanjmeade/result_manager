@@ -648,7 +648,7 @@ res_mag_obj_1 = fig.scatter(
     "lon_1",
     "lat_1",
     source=stasource_1,
-    size=3,
+    size="res_mag_1",
     color={"field": "res_mag_1", "transform": resmag_color_mapper},
     visible=False,
 )
@@ -777,7 +777,7 @@ res_mag_obj_2 = fig.scatter(
     "lon_2",
     "lat_2",
     source=stasource_2,
-    size=3,
+    size="res_mag_2",
     color={"field": "res_mag_2", "transform": resmag_color_mapper},
     visible=False,
 )
