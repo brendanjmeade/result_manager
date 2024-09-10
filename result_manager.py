@@ -71,6 +71,7 @@ stasource_1 = ColumnDataSource(
         "mog_east_vel_lon_1": [],
         "mog_north_vel_lat_1": [],
         "res_mag_1": [],
+        "sized_res_mag_1": [],
     }
 )
 
@@ -132,6 +133,7 @@ stasource_2 = ColumnDataSource(
         "mog_east_vel_lon_2": [],
         "mog_north_vel_lat_2": [],
         "res_mag_2": [],
+        "sized_res_mag_2": [],
     }
 )
 segsource_2 = ColumnDataSource(segsource_1.data.copy())
@@ -214,6 +216,7 @@ def load_data1():
         "mog_north_vel_lat_1": station.lat
         + VELOCITY_SCALE * station.model_north_vel_mogi,
         "res_mag_1": resmag,
+        "sized_res_mag_1": 10 * VELOCITY_SCALE * resmag,
     }
 
     # Source for block bounding segments. Dict of length n_segments
@@ -314,6 +317,7 @@ def load_data2():
         "mog_north_vel_lat_2": station.lat
         + VELOCITY_SCALE * station.model_north_vel_mogi,
         "res_mag_2": resmag,
+        "sized_res_mag_2": 10 * VELOCITY_SCALE * resmag,
     }
 
     # Source for block bounding segments. Dict of length n_segments
@@ -542,6 +546,16 @@ loc_obj_1 = fig.scatter(
     "lon_1", "lat_1", source=stasource_1, size=1, color="black", visible=False
 )
 
+# Folder 1: residual magnitudes
+res_mag_obj_1 = fig.scatter(
+    "lon_1",
+    "lat_1",
+    source=stasource_1,
+    size="sized_res_mag_1",
+    color={"field": "res_mag_1", "transform": resmag_color_mapper},
+    visible=False,
+)
+
 # Folder 1: observed velocities
 obs_vel_obj_1 = fig.segment(
     "lon_1",
@@ -643,16 +657,6 @@ mog_vel_obj_1 = fig.segment(
     visible=False,
 )
 
-# Folder 1: residual magnitudes
-res_mag_obj_1 = fig.scatter(
-    "lon_1",
-    "lat_1",
-    source=stasource_1,
-    size="res_mag_1",
-    color={"field": "res_mag_1", "transform": resmag_color_mapper},
-    visible=False,
-)
-
 ############
 # Folder 2 #
 ############
@@ -669,6 +673,16 @@ mog_color_2 = RGB(r=102, g=102, b=102)
 
 loc_obj_2 = fig.scatter(
     "lon_2", "lat_2", source=stasource_2, size=1, color="black", visible=False
+)
+
+# Folder 2: residual magnitudes
+res_mag_obj_2 = fig.scatter(
+    "lon_2",
+    "lat_2",
+    source=stasource_2,
+    size="sized_res_mag_2",
+    color={"field": "res_mag_2", "transform": resmag_color_mapper},
+    visible=False,
 )
 
 # Folder 2: observed velocities
@@ -772,15 +786,6 @@ mog_vel_obj_2 = fig.segment(
     visible=False,
 )
 
-# Folder 2: residual magnitudes
-res_mag_obj_2 = fig.scatter(
-    "lon_2",
-    "lat_2",
-    source=stasource_2,
-    size="res_mag_2",
-    color={"field": "res_mag_2", "transform": resmag_color_mapper},
-    visible=False,
-)
 
 #############
 # Callbacks #
@@ -858,6 +863,7 @@ velocity_scaler_callback = CustomJS(
     let str_north_vel_lat_1 = [];
     let mog_east_vel_lon_1 = [];
     let mog_north_vel_lat_1 = [];
+    let sized_res_mag_1 = [];
     for (let i = 0; i < lon_1.length; i++) {
         obs_east_vel_lon_1.push(lon_1[i] + VELOCITY_SCALE * velocity_scale_slider *  obs_east_vel_1[i]);
         obs_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * obs_north_vel_1[i]);
@@ -875,6 +881,7 @@ velocity_scaler_callback = CustomJS(
         str_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel_1[i]);
         mog_east_vel_lon_1.push(lon_1[i] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel_1[i]);
         mog_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel_1[i]);
+        sized_res_mag_1.push(10 * VELOCITY_SCALE * velocity_scale_slider * res_mag_1[i]);
     }
 
     // Update velocities with current magnitude scaling
@@ -894,6 +901,7 @@ velocity_scaler_callback = CustomJS(
     let str_north_vel_lat_2 = [];
     let mog_east_vel_lon_2 = [];
     let mog_north_vel_lat_2 = [];
+    let sized_res_mag_2 = [];
     for (let j = 0; j < lon_2.length; j++) {
         obs_east_vel_lon_2.push(lon_2[j] + VELOCITY_SCALE * velocity_scale_slider *  obs_east_vel_2[j]);
         obs_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * obs_north_vel_2[j]);
@@ -911,12 +919,13 @@ velocity_scaler_callback = CustomJS(
         str_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel_2[j]);
         mog_east_vel_lon_2.push(lon_2[j] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel_2[j]);
         mog_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel_2[j]);
+        sized_res_mag_2.push(10 * VELOCITY_SCALE * velocity_scale_slider * res_mag_2[j]);
     }
 
     // Package everthing back into dictionary
     // Try source.change.emit();???
-    source1.data = { lon_1, lat_1, obs_east_vel_1, obs_north_vel_1, obs_east_vel_lon_1, obs_north_vel_lat_1, mod_east_vel_1, mod_north_vel_1, mod_east_vel_lon_1, mod_north_vel_lat_1, res_east_vel_1, res_north_vel_1, res_east_vel_lon_1, res_north_vel_lat_1, rot_east_vel_1, rot_north_vel_1, rot_east_vel_lon_1, rot_north_vel_lat_1, seg_east_vel_1, seg_north_vel_1, seg_east_vel_lon_1, seg_north_vel_lat_1, tde_east_vel_1, tde_north_vel_1, tde_east_vel_lon_1, tde_north_vel_lat_1, str_east_vel_1, str_north_vel_1, str_east_vel_lon_1, str_north_vel_lat_1, mog_east_vel_1, mog_north_vel_1, mog_east_vel_lon_1, mog_north_vel_lat_1, res_mag_1}
-    source2.data = { lon_2, lat_2, obs_east_vel_2, obs_north_vel_2, obs_east_vel_lon_2, obs_north_vel_lat_2, mod_east_vel_2, mod_north_vel_2, mod_east_vel_lon_2, mod_north_vel_lat_2, res_east_vel_2, res_north_vel_2, res_east_vel_lon_2, res_north_vel_lat_2, rot_east_vel_2, rot_north_vel_2, rot_east_vel_lon_2, rot_north_vel_lat_2, seg_east_vel_2, seg_north_vel_2, seg_east_vel_lon_2, seg_north_vel_lat_2, tde_east_vel_2, tde_north_vel_2, tde_east_vel_lon_2, tde_north_vel_lat_2, str_east_vel_2, str_north_vel_2, str_east_vel_lon_2, str_north_vel_lat_2, mog_east_vel_2, mog_north_vel_2, mog_east_vel_lon_2, mog_north_vel_lat_2, res_mag_2}
+    source1.data = { lon_1, lat_1, obs_east_vel_1, obs_north_vel_1, obs_east_vel_lon_1, obs_north_vel_lat_1, mod_east_vel_1, mod_north_vel_1, mod_east_vel_lon_1, mod_north_vel_lat_1, res_east_vel_1, res_north_vel_1, res_east_vel_lon_1, res_north_vel_lat_1, rot_east_vel_1, rot_north_vel_1, rot_east_vel_lon_1, rot_north_vel_lat_1, seg_east_vel_1, seg_north_vel_1, seg_east_vel_lon_1, seg_north_vel_lat_1, tde_east_vel_1, tde_north_vel_1, tde_east_vel_lon_1, tde_north_vel_lat_1, str_east_vel_1, str_north_vel_1, str_east_vel_lon_1, str_north_vel_lat_1, mog_east_vel_1, mog_north_vel_1, mog_east_vel_lon_1, mog_north_vel_lat_1, res_mag_1, sized_res_mag_1}
+    source2.data = { lon_2, lat_2, obs_east_vel_2, obs_north_vel_2, obs_east_vel_lon_2, obs_north_vel_lat_2, mod_east_vel_2, mod_north_vel_2, mod_east_vel_lon_2, mod_north_vel_lat_2, res_east_vel_2, res_north_vel_2, res_east_vel_lon_2, res_north_vel_lat_2, rot_east_vel_2, rot_north_vel_2, rot_east_vel_lon_2, rot_north_vel_lat_2, seg_east_vel_2, seg_north_vel_2, seg_east_vel_lon_2, seg_north_vel_lat_2, tde_east_vel_2, tde_north_vel_2, tde_east_vel_lon_2, tde_north_vel_lat_2, str_east_vel_2, str_north_vel_2, str_east_vel_lon_2, str_north_vel_lat_2, mog_east_vel_2, mog_north_vel_2, mog_east_vel_lon_2, mog_north_vel_lat_2, res_mag_2, sized_res_mag_2}
 """,
 )
 
