@@ -1,8 +1,7 @@
-import scipy
 import panel as pn
 import pandas as pd
 import numpy as np
-import copy
+
 import tkinter as tk
 from tkinter import filedialog
 
@@ -151,16 +150,27 @@ folder_load_button_2 = Button(label="load", button_type="success")
 folder_label_2 = Div(text="---")
 
 
-# Define the load_data callback function
-def load_data1():
+def load_data(folder_number):
     # Read data from a local folder
     root = tk.Tk()
     root.withdraw()  # Hide the root window
     folder_name = filedialog.askdirectory(title="load")
-    # Set display of folder name
-    folder_label_1.text = folder_name.split("/")[-1]
 
-    # Read model out put as dataframes
+    # Set display of folder name
+    if folder_number == 1:
+        folder_label = folder_label_1
+        stasource = stasource_1
+        segsource = segsource_1
+        tdesource = tdesource_1
+    else:
+        folder_label = folder_label_2
+        stasource = stasource_2
+        segsource = segsource_2
+        tdesource = tdesource_2
+
+    folder_label.text = folder_name.split("/")[-1]
+
+    # Read model output as dataframes
     station = pd.read_csv(folder_name + "/model_station.csv")
     resmag = np.sqrt(
         np.power(station.model_east_vel_residual, 2)
@@ -169,58 +179,60 @@ def load_data1():
     segment = pd.read_csv(folder_name + "/model_segment.csv")
     meshes = pd.read_csv(folder_name + "/model_meshes.csv")
 
-    stasource_1.data = {
-        "lon_1": station.lon,
-        "lat_1": station.lat,
-        "obs_east_vel_1": station.east_vel,
-        "obs_north_vel_1": station.north_vel,
-        "obs_east_vel_lon_1": station.lon + VELOCITY_SCALE * station.east_vel,
-        "obs_north_vel_lat_1": station.lat + VELOCITY_SCALE * station.north_vel,
-        "mod_east_vel_1": station.model_east_vel,
-        "mod_north_vel_1": station.model_north_vel,
-        "mod_east_vel_lon_1": station.lon + VELOCITY_SCALE * station.model_east_vel,
-        "mod_north_vel_lat_1": station.lat + VELOCITY_SCALE * station.model_north_vel,
-        "res_east_vel_1": station.model_east_vel_residual,
-        "res_north_vel_1": station.model_north_vel_residual,
-        "res_east_vel_lon_1": station.lon
+    suffix = f"_{folder_number}"
+    stasource.data = {
+        f"lon{suffix}": station.lon,
+        f"lat{suffix}": station.lat,
+        f"obs_east_vel{suffix}": station.east_vel,
+        f"obs_north_vel{suffix}": station.north_vel,
+        f"obs_east_vel_lon{suffix}": station.lon + VELOCITY_SCALE * station.east_vel,
+        f"obs_north_vel_lat{suffix}": station.lat + VELOCITY_SCALE * station.north_vel,
+        f"mod_east_vel{suffix}": station.model_east_vel,
+        f"mod_north_vel{suffix}": station.model_north_vel,
+        f"mod_east_vel_lon{suffix}": station.lon
+        + VELOCITY_SCALE * station.model_east_vel,
+        f"mod_north_vel_lat{suffix}": station.lat
+        + VELOCITY_SCALE * station.model_north_vel,
+        f"res_east_vel{suffix}": station.model_east_vel_residual,
+        f"res_north_vel{suffix}": station.model_north_vel_residual,
+        f"res_east_vel_lon{suffix}": station.lon
         + VELOCITY_SCALE * station.model_east_vel_residual,
-        "res_north_vel_lat_1": station.lat
+        f"res_north_vel_lat{suffix}": station.lat
         + VELOCITY_SCALE * station.model_north_vel_residual,
-        "rot_east_vel_1": station.model_east_vel_rotation,
-        "rot_north_vel_1": station.model_north_vel_rotation,
-        "rot_east_vel_lon_1": station.lon
+        f"rot_east_vel{suffix}": station.model_east_vel_rotation,
+        f"rot_north_vel{suffix}": station.model_north_vel_rotation,
+        f"rot_east_vel_lon{suffix}": station.lon
         + VELOCITY_SCALE * station.model_east_vel_rotation,
-        "rot_north_vel_lat_1": station.lat
+        f"rot_north_vel_lat{suffix}": station.lat
         + VELOCITY_SCALE * station.model_north_vel_rotation,
-        "seg_east_vel_1": station.model_east_elastic_segment,
-        "seg_north_vel_1": station.model_north_elastic_segment,
-        "seg_east_vel_lon_1": station.lon
+        f"seg_east_vel{suffix}": station.model_east_elastic_segment,
+        f"seg_north_vel{suffix}": station.model_north_elastic_segment,
+        f"seg_east_vel_lon{suffix}": station.lon
         + VELOCITY_SCALE * station.model_east_elastic_segment,
-        "seg_north_vel_lat_1": station.lat
+        f"seg_north_vel_lat{suffix}": station.lat
         + VELOCITY_SCALE * station.model_north_elastic_segment,
-        "tde_east_vel_1": station.model_east_vel_tde,
-        "tde_north_vel_1": station.model_north_vel_tde,
-        "tde_east_vel_lon_1": station.lon + VELOCITY_SCALE * station.model_east_vel_tde,
-        "tde_north_vel_lat_1": station.lat
+        f"tde_east_vel{suffix}": station.model_east_vel_tde,
+        f"tde_north_vel{suffix}": station.model_north_vel_tde,
+        f"tde_east_vel_lon{suffix}": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_tde,
+        f"tde_north_vel_lat{suffix}": station.lat
         + VELOCITY_SCALE * station.model_north_vel_tde,
-        "str_east_vel_1": station.model_east_vel_block_strain_rate,
-        "str_north_vel_1": station.model_north_vel_block_strain_rate,
-        "str_east_vel_lon_1": station.lon
+        f"str_east_vel{suffix}": station.model_east_vel_block_strain_rate,
+        f"str_north_vel{suffix}": station.model_north_vel_block_strain_rate,
+        f"str_east_vel_lon{suffix}": station.lon
         + VELOCITY_SCALE * station.model_east_vel_block_strain_rate,
-        "str_north_vel_lat_1": station.lat
+        f"str_north_vel_lat{suffix}": station.lat
         + VELOCITY_SCALE * station.model_north_vel_block_strain_rate,
-        "mog_east_vel_1": station.model_east_vel_mogi,
-        "mog_north_vel_1": station.model_north_vel_mogi,
-        "mog_east_vel_lon_1": station.lon
+        f"mog_east_vel{suffix}": station.model_east_vel_mogi,
+        f"mog_north_vel{suffix}": station.model_north_vel_mogi,
+        f"mog_east_vel_lon{suffix}": station.lon
         + VELOCITY_SCALE * station.model_east_vel_mogi,
-        "mog_north_vel_lat_1": station.lat
+        f"mog_north_vel_lat{suffix}": station.lat
         + VELOCITY_SCALE * station.model_north_vel_mogi,
-        "res_mag_1": resmag,
-        "sized_res_mag_1": 10 * VELOCITY_SCALE * resmag,
+        f"res_mag{suffix}": resmag,
     }
 
-    # Source for block bounding segments. Dict of length n_segments
-    segsource_1.data = {
+    segsource.data = {
         "xseg": [
             np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
             for i in range(len(segment))
@@ -236,7 +248,7 @@ def load_data1():
         "active_comp": list(segment["model_strike_slip_rate"]),
     }
 
-    tdesource_1.data = {
+    tdesource.data = {
         "xseg": [
             np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
             for j in range(len(meshes.lon1))
@@ -251,110 +263,10 @@ def load_data1():
     }
 
 
-# Define the load_data callback function
-def load_data2():
-    # Read data from a local folder
-    root = tk.Tk()
-    root.withdraw()  # Hide the root window
-    folder_name = filedialog.askdirectory(title="load")
+# Update the button callbacks
+folder_load_button_1.on_click(lambda: load_data(1))
+folder_load_button_2.on_click(lambda: load_data(2))
 
-    # Set display of folder name
-    folder_label_2.text = folder_name.split("/")[-1]
-
-    # Read model out put as dataframes
-    station = pd.read_csv(folder_name + "/model_station.csv")
-    resmag = np.sqrt(
-        np.power(station.model_east_vel_residual, 2)
-        + np.power(station.model_north_vel_residual, 2)
-    )
-    segment = pd.read_csv(folder_name + "/model_segment.csv")
-    meshes = pd.read_csv(folder_name + "/model_meshes.csv")
-
-    stasource_2.data = {
-        "lon_2": station.lon,
-        "lat_2": station.lat,
-        "obs_east_vel_2": station.east_vel,
-        "obs_north_vel_2": station.north_vel,
-        "obs_east_vel_lon_2": station.lon + VELOCITY_SCALE * station.east_vel,
-        "obs_north_vel_lat_2": station.lat + VELOCITY_SCALE * station.north_vel,
-        "mod_east_vel_2": station.model_east_vel,
-        "mod_north_vel_2": station.model_north_vel,
-        "mod_east_vel_lon_2": station.lon + VELOCITY_SCALE * station.model_east_vel,
-        "mod_north_vel_lat_2": station.lat + VELOCITY_SCALE * station.model_north_vel,
-        "res_east_vel_2": station.model_east_vel_residual,
-        "res_north_vel_2": station.model_north_vel_residual,
-        "res_east_vel_lon_2": station.lon
-        + VELOCITY_SCALE * station.model_east_vel_residual,
-        "res_north_vel_lat_2": station.lat
-        + VELOCITY_SCALE * station.model_north_vel_residual,
-        "rot_east_vel_2": station.model_east_vel_rotation,
-        "rot_north_vel_2": station.model_north_vel_rotation,
-        "rot_east_vel_lon_2": station.lon
-        + VELOCITY_SCALE * station.model_east_vel_rotation,
-        "rot_north_vel_lat_2": station.lat
-        + VELOCITY_SCALE * station.model_north_vel_rotation,
-        "seg_east_vel_2": station.model_east_elastic_segment,
-        "seg_north_vel_2": station.model_north_elastic_segment,
-        "seg_east_vel_lon_2": station.lon
-        + VELOCITY_SCALE * station.model_east_elastic_segment,
-        "seg_north_vel_lat_2": station.lat
-        + VELOCITY_SCALE * station.model_north_elastic_segment,
-        "tde_east_vel_2": station.model_east_vel_tde,
-        "tde_north_vel_2": station.model_north_vel_tde,
-        "tde_east_vel_lon_2": station.lon + VELOCITY_SCALE * station.model_east_vel_tde,
-        "tde_north_vel_lat_2": station.lat
-        + VELOCITY_SCALE * station.model_north_vel_tde,
-        "str_east_vel_2": station.model_east_vel_block_strain_rate,
-        "str_north_vel_2": station.model_north_vel_block_strain_rate,
-        "str_east_vel_lon_2": station.lon
-        + VELOCITY_SCALE * station.model_east_vel_block_strain_rate,
-        "str_north_vel_lat_2": station.lat
-        + VELOCITY_SCALE * station.model_north_vel_block_strain_rate,
-        "mog_east_vel_2": station.model_east_vel_mogi,
-        "mog_north_vel_2": station.model_north_vel_mogi,
-        "mog_east_vel_lon_2": station.lon
-        + VELOCITY_SCALE * station.model_east_vel_mogi,
-        "mog_north_vel_lat_2": station.lat
-        + VELOCITY_SCALE * station.model_north_vel_mogi,
-        "res_mag_2": resmag,
-        "sized_res_mag_2": 10 * VELOCITY_SCALE * resmag,
-    }
-
-    # Source for block bounding segments. Dict of length n_segments
-    segsource_2.data = {
-        "xseg": [
-            np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
-            for i in range(len(segment))
-        ],
-        "yseg": [
-            np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
-            for i in range(len(segment))
-        ],
-        "ssrate": list(segment["model_strike_slip_rate"]),
-        "dsrate": list(
-            segment["model_dip_slip_rate"] - segment["model_tensile_slip_rate"]
-        ),
-        "active_comp": list(segment["model_strike_slip_rate"]),
-    }
-
-    tdesource_2.data = {
-        "xseg": [
-            np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
-            for j in range(len(meshes.lon1))
-        ],
-        "yseg": [
-            np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
-            for j in range(len(meshes.lon1))
-        ],
-        "ssrate": list(meshes["strike_slip_rate"]),
-        "dsrate": list(meshes["dip_slip_rate"]),
-        "active_comp": list(meshes["strike_slip_rate"]),
-    }
-
-
-# Link the callback function to the button
-folder_load_button_1.on_click(load_data1)
-folder_load_button_2.on_click(load_data2)
 
 ##############################
 # END: Load data from button #
@@ -365,11 +277,8 @@ folder_load_button_2.on_click(load_data2)
 # Figure setup #
 ################
 def get_coastlines():
-    # COASTLINES = scipy.io.loadmat("coastlines.mat")
-    # COASTLINES["lon"] = COASTLINES["lon"].flatten()
-    # COASTLINES["lat"] = COASTLINES["lat"].flatten()
-    COASTLINES = np.load("GSHHS_c_L1_0_360.npz")
-    return COASTLINES
+    coastlines = np.load("GSHHS_c_L1_0_360.npz")
+    return coastlines
 
 
 fig = figure(
