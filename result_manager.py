@@ -230,6 +230,7 @@ def load_data(folder_number):
         f"mog_north_vel_lat{suffix}": station.lat
         + VELOCITY_SCALE * station.model_north_vel_mogi,
         f"res_mag{suffix}": resmag,
+        f"sized_res_mag{suffix}": 10 * VELOCITY_SCALE * resmag,
     }
 
     segsource.data = {
