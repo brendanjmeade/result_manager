@@ -30,6 +30,7 @@ from bokeh.colors import RGB
 pn.extension()
 
 VELOCITY_SCALE = 0.01
+LINE_WIDTH_SCALE = 0.1
 
 ##################################
 # Declare empty ColumnDataStores #
@@ -83,6 +84,7 @@ segsource_1 = ColumnDataSource(
         "ssrate": [],
         "dsrate": [],
         "active_comp": [],
+        "line_width": [],
     },
 )
 
@@ -234,6 +236,7 @@ def load_data1():
             segment["model_dip_slip_rate"] - segment["model_tensile_slip_rate"]
         ),
         "active_comp": list(segment["model_strike_slip_rate"]),
+        "line_width": [1 for _ in range(len(segment))],
     }
 
     tdesource_1.data = {
@@ -335,6 +338,7 @@ def load_data2():
             segment["model_dip_slip_rate"] - segment["model_tensile_slip_rate"]
         ),
         "active_comp": list(segment["model_strike_slip_rate"]),
+        "line_width": [1 for _ in range(len(segment))],
     }
 
     tdesource_2.data = {
@@ -454,6 +458,10 @@ velocity_scaler = Slider(
     start=0.0, end=50, value=1, step=1.0, title="vel scale", width=200
 )
 
+line_width_scaler = Slider(
+    start=0.1, end=1, value=0.1, step=0.01, title="line width scale", width=200
+)
+
 
 ###############
 # Map objects #
@@ -518,7 +526,7 @@ seg_color_obj_1 = fig.multi_line(
     ys="yseg",
     line_color={"field": "active_comp", "transform": slip_color_mapper},
     source=segsource_1,
-    line_width=4,
+    line_width="line_width",
     visible=False,
 )
 
@@ -528,7 +536,7 @@ seg_color_obj_2 = fig.multi_line(
     ys="yseg",
     line_color={"field": "active_comp", "transform": slip_color_mapper},
     source=segsource_2,
-    line_width=4,
+    line_width="line_width",
     visible=False,
 )
 
@@ -931,22 +939,71 @@ velocity_scaler_callback = CustomJS(
 
 slip_component_callback_js = """
     const radio_value = cb_obj.active;
-    const xseg = source.data.xseg
-    const yseg = source.data.yseg
-    const ssrate = source.data.ssrate
-    const dsrate = source.data.dsrate  
-    let active_comp = []                    
+    const xseg = source.data.xseg;
+    const yseg = source.data.yseg;
+    const ssrate = source.data.ssrate;
+    const dsrate = source.data.dsrate;
+    let active_comp = [];
+    let line_width = [];
+    const line_width_scale = line_width_scaler.value;
     for (let i = 0; i < dsrate.length; i++) {
-        if(radio_value ==0) {
+        if (radio_value == 0) {
             active_comp[i] = ssrate[i];
+            line_width[i] = 1 + LINE_WIDTH_SCALE * line_width_scale * Math.abs(ssrate[i]);
         } else {
             active_comp[i] = dsrate[i];
+            line_width[i] = 1 + LINE_WIDTH_SCALE * line_width_scale * Math.abs(dsrate[i]);
         }
     }
-   //source.change.emit();
-   source.data = { xseg, yseg, ssrate, dsrate, active_comp}
+    source.data = { xseg, yseg, ssrate, dsrate, active_comp, line_width };
+    source.change.emit();
 """
 
+
+line_width_scaler_callback = CustomJS(
+    args=dict(
+        source1=segsource_1,
+        source2=segsource_2,
+        line_width_scaler=line_width_scaler,
+        LINE_WIDTH_SCALE=LINE_WIDTH_SCALE,
+        seg_color_radio_1=seg_color_radio_1,
+        seg_color_radio_2=seg_color_radio_2,
+    ),
+    code="""
+    const line_width_scale = line_width_scaler.value;
+    const ssrate1 = source1.data.ssrate;
+    const dsrate1 = source1.data.dsrate;
+    const ssrate2 = source2.data.ssrate;
+    const dsrate2 = source2.data.dsrate;
+    const active_comp1 = source1.data.active_comp;
+    const active_comp2 = source2.data.active_comp;
+    
+    let line_width1 = [];
+    let line_width2 = [];
+    
+    const radio_value1 = seg_color_radio_1.active;
+    const radio_value2 = seg_color_radio_2.active;
+    
+    for (let i = 0; i < ssrate1.length; i++) {
+        const rate1 = (radio_value1 == 0) ? Math.abs(ssrate1[i]) : Math.abs(dsrate1[i]);
+        line_width1.push(1 + LINE_WIDTH_SCALE * line_width_scale * rate1);
+        active_comp1[i] = (radio_value1 == 0) ? ssrate1[i] : dsrate1[i];
+    }
+    
+    for (let i = 0; i < ssrate2.length; i++) {
+        const rate2 = (radio_value2 == 0) ? Math.abs(ssrate2[i]) : Math.abs(dsrate2[i]);
+        line_width2.push(1 + LINE_WIDTH_SCALE * line_width_scale * rate2);
+        active_comp2[i] = (radio_value2 == 0) ? ssrate2[i] : dsrate2[i];
+    }
+    
+    source1.data.line_width = line_width1;
+    source1.data.active_comp = active_comp1;
+    source2.data.line_width = line_width2;
+    source2.data.active_comp = active_comp2;
+    source1.change.emit();
+    source2.change.emit();
+    """
+)
 
 ###################################
 # Attach the callbacks to handles #
@@ -985,8 +1042,17 @@ seg_color_checkbox_1.js_on_change(
     "active", CustomJS(args={"plot_object": seg_color_obj_1}, code=checkbox_callback_js)
 )
 seg_color_radio_1.js_on_change(
-    "active", CustomJS(args=dict(source=segsource_1), code=slip_component_callback_js)
+    "active",
+    CustomJS(
+        args=dict(
+            source=segsource_1,
+            line_width_scaler=line_width_scaler,
+            LINE_WIDTH_SCALE=LINE_WIDTH_SCALE
+        ),
+        code=slip_component_callback_js
+    )
 )
+
 tde_checkbox_1.js_on_change(
     "active", CustomJS(args={"plot_object": tde_obj_1}, code=checkbox_callback_js)
 )
@@ -1029,7 +1095,15 @@ seg_color_checkbox_2.js_on_change(
     "active", CustomJS(args={"plot_object": seg_color_obj_2}, code=checkbox_callback_js)
 )
 seg_color_radio_2.js_on_change(
-    "active", CustomJS(args=dict(source=segsource_2), code=slip_component_callback_js)
+    "active",
+    CustomJS(
+        args=dict(
+            source=segsource_2,
+            line_width_scaler=line_width_scaler,
+            LINE_WIDTH_SCALE=LINE_WIDTH_SCALE
+        ),
+        code=slip_component_callback_js
+    )
 )
 tde_checkbox_2.js_on_change(
     "active", CustomJS(args={"plot_object": tde_obj_2}, code=checkbox_callback_js)
@@ -1042,6 +1116,7 @@ tde_radio_2.js_on_change(
 
 # Velocity slider
 velocity_scaler.js_on_change("value", velocity_scaler_callback)
+line_width_scaler.js_on_change("value", line_width_scaler_callback)
 
 # Residual comparison
 
@@ -1099,6 +1174,10 @@ grid_layout[6, 1] = pn.Column(
 
 grid_layout[5, 0:1] = pn.Column(
     pn.pane.Bokeh(velocity_scaler),
+)
+
+grid_layout[8, 0:1] = pn.Column(
+    pn.pane.Bokeh(line_width_scaler),
 )
 
 # Place map
