@@ -150,8 +150,8 @@ commonsta = ColumnDataSource(
 )
 
 # Declare empty station dataframes
-station1 = pd.DataFrame()
-station2 = pd.DataFrame()
+station_1 = pd.DataFrame()
+station_2 = pd.DataFrame()
 
 ################################
 # START: Load data from button #
@@ -164,77 +164,92 @@ folder_load_button_2 = Button(label="load", button_type="success")
 folder_label_2 = Div(text="---")
 
 
-# Define the load_data callback function
-def load_data1():
+def load_data(folder_number):
     # Read data from a local folder
     root = tk.Tk()
     root.withdraw()  # Hide the root window
     folder_name = filedialog.askdirectory(title="load")
-    # Set display of folder name
-    folder_label_1.text = folder_name.split("/")[-1]
 
-    # Read model out put as dataframes
-    station1 = pd.read_csv(folder_name + "/model_station.csv")
+    # Set display of folder name
+    if folder_number == 1:
+        folder_label = folder_label_1
+        stasource = stasource_1
+        segsource = segsource_1
+        tdesource = tdesource_1
+        station = station_1
+    else:
+        folder_label = folder_label_2
+        stasource = stasource_2
+        segsource = segsource_2
+        tdesource = tdesource_2
+        station = station_2
+
+    folder_label.text = folder_name.split("/")[-1]
+
+    # Read model output as dataframes
+    station = pd.read_csv(folder_name + "/model_station.csv")
     resmag = np.sqrt(
-        np.power(station1.model_east_vel_residual, 2)
-        + np.power(station1.model_north_vel_residual, 2)
+        np.power(station.model_east_vel_residual, 2)
+        + np.power(station.model_north_vel_residual, 2)
     )
     segment = pd.read_csv(folder_name + "/model_segment.csv")
     meshes = pd.read_csv(folder_name + "/model_meshes.csv")
 
-    stasource_1.data = {
-        "lon_1": station1.lon,
-        "lat_1": station1.lat,
-        "obs_east_vel_1": station1.east_vel,
-        "obs_north_vel_1": station1.north_vel,
-        "obs_east_vel_lon_1": station1.lon + VELOCITY_SCALE * station1.east_vel,
-        "obs_north_vel_lat_1": station1.lat + VELOCITY_SCALE * station1.north_vel,
-        "mod_east_vel_1": station1.model_east_vel,
-        "mod_north_vel_1": station1.model_north_vel,
-        "mod_east_vel_lon_1": station1.lon + VELOCITY_SCALE * station1.model_east_vel,
-        "mod_north_vel_lat_1": station1.lat + VELOCITY_SCALE * station1.model_north_vel,
-        "res_east_vel_1": station1.model_east_vel_residual,
-        "res_north_vel_1": station1.model_north_vel_residual,
-        "res_east_vel_lon_1": station1.lon
-        + VELOCITY_SCALE * station1.model_east_vel_residual,
-        "res_north_vel_lat_1": station1.lat
-        + VELOCITY_SCALE * station1.model_north_vel_residual,
-        "rot_east_vel_1": station1.model_east_vel_rotation,
-        "rot_north_vel_1": station1.model_north_vel_rotation,
-        "rot_east_vel_lon_1": station1.lon
-        + VELOCITY_SCALE * station1.model_east_vel_rotation,
-        "rot_north_vel_lat_1": station1.lat
-        + VELOCITY_SCALE * station1.model_north_vel_rotation,
-        "seg_east_vel_1": station1.model_east_elastic_segment,
-        "seg_north_vel_1": station1.model_north_elastic_segment,
-        "seg_east_vel_lon_1": station1.lon
-        + VELOCITY_SCALE * station1.model_east_elastic_segment,
-        "seg_north_vel_lat_1": station1.lat
-        + VELOCITY_SCALE * station1.model_north_elastic_segment,
-        "tde_east_vel_1": station1.model_east_vel_tde,
-        "tde_north_vel_1": station1.model_north_vel_tde,
-        "tde_east_vel_lon_1": station1.lon
-        + VELOCITY_SCALE * station1.model_east_vel_tde,
-        "tde_north_vel_lat_1": station1.lat
-        + VELOCITY_SCALE * station1.model_north_vel_tde,
-        "str_east_vel_1": station1.model_east_vel_block_strain_rate,
-        "str_north_vel_1": station1.model_north_vel_block_strain_rate,
-        "str_east_vel_lon_1": station1.lon
-        + VELOCITY_SCALE * station1.model_east_vel_block_strain_rate,
-        "str_north_vel_lat_1": station1.lat
-        + VELOCITY_SCALE * station1.model_north_vel_block_strain_rate,
-        "mog_east_vel_1": station1.model_east_vel_mogi,
-        "mog_north_vel_1": station1.model_north_vel_mogi,
-        "mog_east_vel_lon_1": station1.lon
-        + VELOCITY_SCALE * station1.model_east_vel_mogi,
-        "mog_north_vel_lat_1": station1.lat
-        + VELOCITY_SCALE * station1.model_north_vel_mogi,
-        "res_mag_1": resmag,
-        "sized_res_mag_1": 10 * VELOCITY_SCALE * resmag,
+    suffix = f"_{folder_number}"
+    stasource.data = {
+        f"lon{suffix}": station.lon,
+        f"lat{suffix}": station.lat,
+        f"obs_east_vel{suffix}": station.east_vel,
+        f"obs_north_vel{suffix}": station.north_vel,
+        f"obs_east_vel_lon{suffix}": station.lon + VELOCITY_SCALE * station.east_vel,
+        f"obs_north_vel_lat{suffix}": station.lat + VELOCITY_SCALE * station.north_vel,
+        f"mod_east_vel{suffix}": station.model_east_vel,
+        f"mod_north_vel{suffix}": station.model_north_vel,
+        f"mod_east_vel_lon{suffix}": station.lon
+        + VELOCITY_SCALE * station.model_east_vel,
+        f"mod_north_vel_lat{suffix}": station.lat
+        + VELOCITY_SCALE * station.model_north_vel,
+        f"res_east_vel{suffix}": station.model_east_vel_residual,
+        f"res_north_vel{suffix}": station.model_north_vel_residual,
+        f"res_east_vel_lon{suffix}": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_residual,
+        f"res_north_vel_lat{suffix}": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_residual,
+        f"rot_east_vel{suffix}": station.model_east_vel_rotation,
+        f"rot_north_vel{suffix}": station.model_north_vel_rotation,
+        f"rot_east_vel_lon{suffix}": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_rotation,
+        f"rot_north_vel_lat{suffix}": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_rotation,
+        f"seg_east_vel{suffix}": station.model_east_elastic_segment,
+        f"seg_north_vel{suffix}": station.model_north_elastic_segment,
+        f"seg_east_vel_lon{suffix}": station.lon
+        + VELOCITY_SCALE * station.model_east_elastic_segment,
+        f"seg_north_vel_lat{suffix}": station.lat
+        + VELOCITY_SCALE * station.model_north_elastic_segment,
+        f"tde_east_vel{suffix}": station.model_east_vel_tde,
+        f"tde_north_vel{suffix}": station.model_north_vel_tde,
+        f"tde_east_vel_lon{suffix}": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_tde,
+        f"tde_north_vel_lat{suffix}": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_tde,
+        f"str_east_vel{suffix}": station.model_east_vel_block_strain_rate,
+        f"str_north_vel{suffix}": station.model_north_vel_block_strain_rate,
+        f"str_east_vel_lon{suffix}": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_block_strain_rate,
+        f"str_north_vel_lat{suffix}": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_block_strain_rate,
+        f"mog_east_vel{suffix}": station.model_east_vel_mogi,
+        f"mog_north_vel{suffix}": station.model_north_vel_mogi,
+        f"mog_east_vel_lon{suffix}": station.lon
+        + VELOCITY_SCALE * station.model_east_vel_mogi,
+        f"mog_north_vel_lat{suffix}": station.lat
+        + VELOCITY_SCALE * station.model_north_vel_mogi,
+        f"res_mag{suffix}": resmag,
+        f"sized_res_mag{suffix}": 10 * VELOCITY_SCALE * resmag,
     }
 
-    # Source for block bounding segments. Dict of length n_segments
-    segsource_1.data = {
+    segsource.data = {
         "xseg": [
             np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
             for i in range(len(segment))
@@ -250,7 +265,7 @@ def load_data1():
         "active_comp": list(segment["model_strike_slip_rate"]),
     }
 
-    tdesource_1.data = {
+    tdesource.data = {
         "xseg": [
             np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
             for j in range(len(meshes.lon1))
@@ -265,120 +280,23 @@ def load_data1():
     }
 
 
-# Define the load_data callback function
-def load_data2():
-    # Read data from a local folder
-    root = tk.Tk()
-    root.withdraw()  # Hide the root window
-    folder_name = filedialog.askdirectory(title="load")
+# Update the button callbacks
+folder_load_button_1.on_click(lambda: load_data(1))
+folder_load_button_2.on_click(lambda: load_data(2))
 
-    # Set display of folder name
-    folder_label_2.text = folder_name.split("/")[-1]
-
-    # Read model out put as dataframes
-    station2 = pd.read_csv(folder_name + "/model_station.csv")
-    resmag = np.sqrt(
-        np.power(station2.model_east_vel_residual, 2)
-        + np.power(station2.model_north_vel_residual, 2)
-    )
-    segment = pd.read_csv(folder_name + "/model_segment.csv")
-    meshes = pd.read_csv(folder_name + "/model_meshes.csv")
-
-    stasource_2.data = {
-        "lon_2": station2.lon,
-        "lat_2": station2.lat,
-        "obs_east_vel_2": station2.east_vel,
-        "obs_north_vel_2": station2.north_vel,
-        "obs_east_vel_lon_2": station2.lon + VELOCITY_SCALE * station2.east_vel,
-        "obs_north_vel_lat_2": station2.lat + VELOCITY_SCALE * station2.north_vel,
-        "mod_east_vel_2": station2.model_east_vel,
-        "mod_north_vel_2": station2.model_north_vel,
-        "mod_east_vel_lon_2": station2.lon + VELOCITY_SCALE * station2.model_east_vel,
-        "mod_north_vel_lat_2": station2.lat + VELOCITY_SCALE * station2.model_north_vel,
-        "res_east_vel_2": station2.model_east_vel_residual,
-        "res_north_vel_2": station2.model_north_vel_residual,
-        "res_east_vel_lon_2": station2.lon
-        + VELOCITY_SCALE * station2.model_east_vel_residual,
-        "res_north_vel_lat_2": station2.lat
-        + VELOCITY_SCALE * station2.model_north_vel_residual,
-        "rot_east_vel_2": station2.model_east_vel_rotation,
-        "rot_north_vel_2": station2.model_north_vel_rotation,
-        "rot_east_vel_lon_2": station2.lon
-        + VELOCITY_SCALE * station2.model_east_vel_rotation,
-        "rot_north_vel_lat_2": station2.lat
-        + VELOCITY_SCALE * station2.model_north_vel_rotation,
-        "seg_east_vel_2": station2.model_east_elastic_segment,
-        "seg_north_vel_2": station2.model_north_elastic_segment,
-        "seg_east_vel_lon_2": station2.lon
-        + VELOCITY_SCALE * station2.model_east_elastic_segment,
-        "seg_north_vel_lat_2": station2.lat
-        + VELOCITY_SCALE * station2.model_north_elastic_segment,
-        "tde_east_vel_2": station2.model_east_vel_tde,
-        "tde_north_vel_2": station2.model_north_vel_tde,
-        "tde_east_vel_lon_2": station2.lon
-        + VELOCITY_SCALE * station2.model_east_vel_tde,
-        "tde_north_vel_lat_2": station2.lat
-        + VELOCITY_SCALE * station2.model_north_vel_tde,
-        "str_east_vel_2": station2.model_east_vel_block_strain_rate,
-        "str_north_vel_2": station2.model_north_vel_block_strain_rate,
-        "str_east_vel_lon_2": station2.lon
-        + VELOCITY_SCALE * station2.model_east_vel_block_strain_rate,
-        "str_north_vel_lat_2": station2.lat
-        + VELOCITY_SCALE * station2.model_north_vel_block_strain_rate,
-        "mog_east_vel_2": station2.model_east_vel_mogi,
-        "mog_north_vel_2": station2.model_north_vel_mogi,
-        "mog_east_vel_lon_2": station2.lon
-        + VELOCITY_SCALE * station2.model_east_vel_mogi,
-        "mog_north_vel_lat_2": station2.lat
-        + VELOCITY_SCALE * station2.model_north_vel_mogi,
-        "res_mag_2": resmag,
-        "sized_res_mag_2": 10 * VELOCITY_SCALE * resmag,
-    }
-
-    # Source for block bounding segments. Dict of length n_segments
-    segsource_2.data = {
-        "xseg": [
-            np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
-            for i in range(len(segment))
-        ],
-        "yseg": [
-            np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
-            for i in range(len(segment))
-        ],
-        "ssrate": list(segment["model_strike_slip_rate"]),
-        "dsrate": list(
-            segment["model_dip_slip_rate"] - segment["model_tensile_slip_rate"]
-        ),
-        "active_comp": list(segment["model_strike_slip_rate"]),
-    }
-
-    tdesource_2.data = {
-        "xseg": [
-            np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
-            for j in range(len(meshes.lon1))
-        ],
-        "yseg": [
-            np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
-            for j in range(len(meshes.lon1))
-        ],
-        "ssrate": list(meshes["strike_slip_rate"]),
-        "dsrate": list(meshes["dip_slip_rate"]),
-        "active_comp": list(meshes["strike_slip_rate"]),
-    }
+##############################
+# END: Load data from button #
+##############################
 
 
-# Link the callback function to the button
-folder_load_button_1.on_click(load_data1)
-folder_load_button_2.on_click(load_data2)
-
-# Do DataFrame comparisons
-if (not station1.empty) & (not station2.empty):
+# Do DataFrame comparisons for residual improvement
+if (not station_1.empty) & (not station_2.empty):
     # Intersect station dataframes based on lon, lat and retain residual velocity components
     common = pd.merge(
-        station1, station2, how="inner", on=["lon", "lat"], suffixes=("_1", "_2")
+        station_1, station_2, how="inner", on=["lon", "lat"], suffixes=("_1", "_2")
     )
-    not_in_2 = station1[~station1.isin(station2)]
-    not_in_1 = station2[~station2.isin(station1)]
+    not_in_2 = station_1[~station_1.isin(station_2)]
+    not_in_1 = station_2[~station_2.isin(station_1)]
 
     # Calculate residual magnitudes
     common["res_mag_1"] = np.sqrt(
@@ -397,14 +315,9 @@ if (not station1.empty) & (not station2.empty):
             "lon_c": common.lon,
             "lat_c": common.lat,
             "res_mag_diff": common.res_mag_diff,
-            "res_mag_diff_sized": 5 * np.abs(common.res_mag_diff),
+            "res_mag_diff_sized": 5 * VELOCITY_SCALE * np.abs(common.res_mag_diff),
         }
     )
-
-
-##############################
-# END: Load data from button #
-##############################
 
 
 ################
@@ -443,7 +356,6 @@ resmag_color_mapper = LinearColorMapper(palette=viridis(10), low=0, high=5)
 
 # Residual comparison color mapper
 rescompare_color_mapper = LinearColorMapper(palette=brewer["RdBu"][11], low=-5, high=5)
-
 
 ##############
 # UI objects #
@@ -605,6 +517,20 @@ res_mag_obj_1 = fig.scatter(
     color={"field": "res_mag_1", "transform": resmag_color_mapper},
     visible=False,
 )
+
+res_compare_obj = fig.scatter(
+    "lon_c",
+    "lat_c",
+    source=commonsta,
+    marker="circle",
+    size="res_mag_diff_sized",
+    color={"field": "res_mag_diff", "transform": rescompare_color_mapper},
+    line_width=0.5,
+    line_color="black",
+    line_alpha=1.0,
+    visible=True,
+)
+
 
 # Folder 1: observed velocities
 obs_vel_obj_1 = fig.segment(
