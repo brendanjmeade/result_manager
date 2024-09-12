@@ -279,6 +279,36 @@ def load_data(folder_number):
         "active_comp": list(meshes["strike_slip_rate"]),
     }
 
+    # Do DataFrame comparisons for residual improvement
+    if ("lon" in station_1) & ("lon" in station_2):
+        # Intersect station dataframes based on lon, lat and retain residual velocity components
+        common = pd.merge(
+            station_1, station_2, how="inner", on=["lon", "lat"], suffixes=("_1", "_2")
+        )
+        not_in_2 = station_1[~station_1.isin(station_2)]
+        not_in_1 = station_2[~station_2.isin(station_1)]
+
+        # Calculate residual magnitudes
+        common["res_mag_1"] = np.sqrt(
+            common["model_east_vel_residual_1"] ** 2
+            + common["model_north_vel_residual_1"] ** 2
+        )
+        common["res_mag_2"] = np.sqrt(
+            common["model_east_vel_residual_2"] ** 2
+            + common["model_north_vel_residual_2"] ** 2
+        )
+        common["res_mag_diff"] = common["res_mag_2"] - common["res_mag_1"]
+
+        # ColumnDataSource to hold data for stations common to both folders
+        commonsta = ColumnDataSource(
+            data={
+                "lon_c": common.lon,
+                "lat_c": common.lat,
+                "res_mag_diff": common.res_mag_diff,
+                "res_mag_diff_sized": 5 * VELOCITY_SCALE * np.abs(common.res_mag_diff),
+            }
+        )
+
 
 # Update the button callbacks
 folder_load_button_1.on_click(lambda: load_data(1))
@@ -287,37 +317,6 @@ folder_load_button_2.on_click(lambda: load_data(2))
 ##############################
 # END: Load data from button #
 ##############################
-
-
-# Do DataFrame comparisons for residual improvement
-if (not station_1.empty) & (not station_2.empty):
-    # Intersect station dataframes based on lon, lat and retain residual velocity components
-    common = pd.merge(
-        station_1, station_2, how="inner", on=["lon", "lat"], suffixes=("_1", "_2")
-    )
-    not_in_2 = station_1[~station_1.isin(station_2)]
-    not_in_1 = station_2[~station_2.isin(station_1)]
-
-    # Calculate residual magnitudes
-    common["res_mag_1"] = np.sqrt(
-        common["model_east_vel_residual_1"] ** 2
-        + common["model_north_vel_residual_1"] ** 2
-    )
-    common["res_mag_2"] = np.sqrt(
-        common["model_east_vel_residual_2"] ** 2
-        + common["model_north_vel_residual_2"] ** 2
-    )
-    common["res_mag_diff"] = common["res_mag_2"] - common["res_mag_1"]
-
-    # ColumnDataSource to hold data for stations common to both folders
-    commonsta = ColumnDataSource(
-        data={
-            "lon_c": common.lon,
-            "lat_c": common.lat,
-            "res_mag_diff": common.res_mag_diff,
-            "res_mag_diff_sized": 5 * VELOCITY_SCALE * np.abs(common.res_mag_diff),
-        }
-    )
 
 
 ################
@@ -523,7 +522,7 @@ res_compare_obj = fig.scatter(
     "lat_c",
     source=commonsta,
     marker="circle",
-    size="res_mag_diff_sized",
+    size=20,
     color={"field": "res_mag_diff", "transform": rescompare_color_mapper},
     line_width=0.5,
     line_color="black",
