@@ -25,6 +25,7 @@ from bokeh.models import (
 )
 from bokeh.palettes import brewer, viridis
 from bokeh.colors import RGB
+from bokeh.models import HoverTool
 
 pn.extension()
 
@@ -71,6 +72,7 @@ stasource_1 = ColumnDataSource(
         "mog_north_vel_lat_1": [],
         "res_mag_1": [],
         "sized_res_mag_1": [],
+        "name_1": [],
     }
 )
 
@@ -133,6 +135,7 @@ stasource_2 = ColumnDataSource(
         "mog_north_vel_lat_2": [],
         "res_mag_2": [],
         "sized_res_mag_2": [],
+        "name_2": [],
     }
 )
 segsource_2 = ColumnDataSource(segsource_1.data.copy())
@@ -231,6 +234,7 @@ def load_data(folder_number):
         + VELOCITY_SCALE * station.model_north_vel_mogi,
         f"res_mag{suffix}": resmag,
         f"sized_res_mag{suffix}": 10 * VELOCITY_SCALE * resmag,
+        f"name{suffix}": station.name,
     }
 
     segsource.data = {
@@ -456,6 +460,14 @@ loc_obj_1 = fig.scatter(
     "lon_1", "lat_1", source=stasource_1, size=1, color="black", visible=False
 )
 
+hover_tool_1 = HoverTool(
+    tooltips=[
+        ("Name", "@name_1"),
+    ],
+    renderers=[loc_obj_1],
+)
+fig.add_tools(hover_tool_1)
+
 # Folder 1: residual magnitudes
 res_mag_obj_1 = fig.scatter(
     "lon_1",
@@ -584,6 +596,13 @@ mog_color_2 = RGB(r=102, g=102, b=102)
 loc_obj_2 = fig.scatter(
     "lon_2", "lat_2", source=stasource_2, size=1, color="black", visible=False
 )
+hover_tool_2 = HoverTool(
+    tooltips=[
+        ("Name", "@name_2"),
+    ],
+    renderers=[loc_obj_2],
+)
+fig.add_tools(hover_tool_2)
 
 # Folder 2: residual magnitudes
 res_mag_obj_2 = fig.scatter(
