@@ -149,10 +149,6 @@ commonsta = ColumnDataSource(
     }
 )
 
-# Declare empty station dataframes
-station_1 = pd.DataFrame()
-station_2 = pd.DataFrame()
-
 ################################
 # START: Load data from button #
 ################################
@@ -176,13 +172,11 @@ def load_data(folder_number):
         stasource = stasource_1
         segsource = segsource_1
         tdesource = tdesource_1
-        station = station_1
     else:
         folder_label = folder_label_2
         stasource = stasource_2
         segsource = segsource_2
         tdesource = tdesource_2
-        station = station_2
 
     folder_label.text = folder_name.split("/")[-1]
 
@@ -279,36 +273,6 @@ def load_data(folder_number):
         "active_comp": list(meshes["strike_slip_rate"]),
     }
 
-    # Do DataFrame comparisons for residual improvement
-    if ("lon" in station_1) & ("lon" in station_2):
-        # Intersect station dataframes based on lon, lat and retain residual velocity components
-        common = pd.merge(
-            station_1, station_2, how="inner", on=["lon", "lat"], suffixes=("_1", "_2")
-        )
-        not_in_2 = station_1[~station_1.isin(station_2)]
-        not_in_1 = station_2[~station_2.isin(station_1)]
-
-        # Calculate residual magnitudes
-        common["res_mag_1"] = np.sqrt(
-            common["model_east_vel_residual_1"] ** 2
-            + common["model_north_vel_residual_1"] ** 2
-        )
-        common["res_mag_2"] = np.sqrt(
-            common["model_east_vel_residual_2"] ** 2
-            + common["model_north_vel_residual_2"] ** 2
-        )
-        common["res_mag_diff"] = common["res_mag_2"] - common["res_mag_1"]
-
-        # ColumnDataSource to hold data for stations common to both folders
-        commonsta = ColumnDataSource(
-            data={
-                "lon_c": common.lon,
-                "lat_c": common.lat,
-                "res_mag_diff": common.res_mag_diff,
-                "res_mag_diff_sized": 5 * VELOCITY_SCALE * np.abs(common.res_mag_diff),
-            }
-        )
-
 
 # Update the button callbacks
 folder_load_button_1.on_click(lambda: load_data(1))
@@ -317,6 +281,65 @@ folder_load_button_2.on_click(lambda: load_data(2))
 ##############################
 # END: Load data from button #
 ##############################
+
+##############################################
+# Checkbox to compare two folders' residuals #
+##############################################
+
+# The first time this box is checked, a tagged plot object is created
+# With subsequent checks, just the visibility is controlled
+
+
+# Do DataFrame comparisons for residual improvement
+if len(stasource_1.data.lon_1) > 0 & len(stasource_2.data.lon_2) > 0:
+    # Generate temporary dataframes from ColumnDataSources
+    station_1 = pd.DataFrame(stasource_1.data)
+    station_2 = pd.DataFrame(stasource_2.data)
+    # Intersect station dataframes based on lon, lat and retain residual velocity components
+    common = pd.merge(
+        station_1,
+        station_2,
+        how="inner",
+        left_on=["lon_1", "lat_1"],
+        right_on=["lon_2", "lat_2"],
+    )
+    # Stations unique to either
+    unique = pd.concat(
+        (
+            station_1[["lon_1", "lat_1"]],
+            station_2[["lon_2", "lat_2"]].rename(
+                columns={"lon_2": "lon_1", "lat_2": "lat_1"}
+            ),
+        )
+    ).drop_duplicates(keep=False)
+
+    # Calculate residual magnitudes
+    common["res_mag_1"] = np.sqrt(
+        common["model_east_vel_residual_1"] ** 2
+        + common["model_north_vel_residual_1"] ** 2
+    )
+    common["res_mag_2"] = np.sqrt(
+        common["model_east_vel_residual_2"] ** 2
+        + common["model_north_vel_residual_2"] ** 2
+    )
+    common["res_mag_diff"] = common["res_mag_2"] - common["res_mag_1"]
+
+    # ColumnDataSource to hold data for stations common to both folders
+    commonsta = ColumnDataSource(
+        data={
+            "lon_c": common.lon,
+            "lat_c": common.lat,
+            "res_mag_diff": common.res_mag_diff,
+            "res_mag_diff_sized": 5 * VELOCITY_SCALE * np.abs(common.res_mag_diff),
+        }
+    )
+    # ColumnDataSource to hold data for stations unique to either
+    uniquesta = ColumnDataSource(
+        data={
+            "lon_u": unique.lon_1,
+            "lat_u": unique.lat_1,
+        }
+    )
 
 
 ################
