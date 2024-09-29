@@ -265,7 +265,7 @@ def load_data(folder_number):
         f"mog_north_vel_lat{suffix}": y_station
         + VELOCITY_SCALE * station.model_north_vel_mogi,
         f"res_mag{suffix}": resmag,
-        f"sized_res_mag{suffix}": 10 * VELOCITY_SCALE * resmag,
+        f"sized_res_mag{suffix}": VELOCITY_SCALE/10000 * resmag,
         f"name{suffix}": station.name,
     }
 
@@ -868,7 +868,7 @@ velocity_scaler_callback = CustomJS(
         str_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel_1[i]);
         mog_east_vel_lon_1.push(lon_1[i] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel_1[i]);
         mog_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel_1[i]);
-        sized_res_mag_1.push(10 * VELOCITY_SCALE * velocity_scale_slider * res_mag_1[i]);
+        sized_res_mag_1.push(VELOCITY_SCALE/10000 * velocity_scale_slider * res_mag_1[i]);
     }
 
     // Update velocities with current magnitude scaling
