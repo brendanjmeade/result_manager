@@ -96,6 +96,7 @@ segsource_1 = ColumnDataSource(
         "ssrate": [],
         "dsrate": [],
         "active_comp": [],
+        "name": [],
     },
 )
 
@@ -284,6 +285,7 @@ def load_data(folder_number):
             segment["model_dip_slip_rate"] - segment["model_tensile_slip_rate"]
         ),
         "active_comp": list(segment["model_strike_slip_rate"]),
+        "name_1": list(segment["name"]),
     }
 
     tdesource.data = {
@@ -515,7 +517,7 @@ hover_tool_1 = HoverTool(
     tooltips=[
         ("Name", "@name_1"),
     ],
-    renderers=[loc_obj_1],
+    renderers=[loc_obj_1, seg_obj_1],
 )
 fig.add_tools(hover_tool_1)
 
