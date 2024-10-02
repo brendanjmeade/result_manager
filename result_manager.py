@@ -516,6 +516,7 @@ loc_obj_1 = fig.scatter(
 hover_tool_1 = HoverTool(
     tooltips=[
         ("Name", "@name_1"),
+        ("Slip Rate", "@ssrate")
     ],
     renderers=[loc_obj_1, seg_obj_1],
 )
