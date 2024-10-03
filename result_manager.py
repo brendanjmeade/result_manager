@@ -5,7 +5,6 @@ import numpy as np
 import tkinter as tk
 from tkinter import filedialog
 
-from math import pi, log, tan
 from bokeh.models import WMTSTileSource
 import xyzservices.providers as xyz
 
@@ -36,12 +35,11 @@ pn.extension()
 VELOCITY_SCALE = 1000
 
 def wgs84_to_web_mercator(lon, lat):
-    #Converts decimal longitude/latitude to Web Mercator x/y
-    k = 6378137.0  # Earth's radius (m)
-    x = lon * (k * pi / 180.0)
-    y = np.log(np.tan((90 + lat) * pi / 360.0)) * k
+    # Converts decimal (longitude, latitude) to Web Mercator (x, y)
+    EARTH_RADIUS = 6378137.0  # Earth's radius (m)
+    x = EARTH_RADIUS * np.deg2rad(lon)
+    y = EARTH_RADIUS * np.log(np.tan((np.pi / 4.0 + np.deg2rad(lat) / 2.0)))
     return x, y
-
 
 ##################################
 # Declare empty ColumnDataStores #
