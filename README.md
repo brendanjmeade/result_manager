@@ -20,5 +20,5 @@ Start the application:
 `bokeh serve --show result_manager.py`
 
 In order to get map styling, create a Mapbox account and do the following:
-Run this command 'cp mapbox_token.py.template mapbox_token.py'
-Add your mapbox api key to 'mapbox_token.py'
+- Run this command `cp mapbox_token.py.template mapbox_token.py`
+- Add your mapbox api key to 'mapbox_token.py'
