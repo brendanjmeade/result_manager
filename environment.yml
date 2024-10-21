@@ -7,3 +7,4 @@ dependencies:
   - pandas
   - panel
   - bokeh
+  - xyzservices
