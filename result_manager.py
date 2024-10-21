@@ -5,6 +5,14 @@ import numpy as np
 import tkinter as tk
 from tkinter import filedialog
 
+
+from bokeh.models import WMTSTileSource
+
+try:
+    from mapbox_token import mapbox_access_token
+except:
+    mapbox_access_token = None
+
 from bokeh.plotting import figure
 from bokeh.models import (
     Slider,
@@ -13,7 +21,7 @@ from bokeh.models import (
     CustomJS,
     ColumnDataSource,
     LinearAxis,
-    BoxZoomTool,
+    WheelZoomTool,
     ResetTool,
     PanTool,
     Div,
@@ -29,7 +37,19 @@ from bokeh.models import HoverTool
 
 pn.extension()
 
-VELOCITY_SCALE = 0.01
+VELOCITY_SCALE = 1000
+ 
+if mapbox_access_token == "INSERT_TOKEN_HERE" or mapbox_access_token is None or mapbox_access_token == "":
+    has_mapbox_token = False
+else:
+    has_mapbox_token = True
+
+def wgs84_to_web_mercator(lon, lat):
+    # Converts decimal (longitude, latitude) to Web Mercator (x, y)
+    EARTH_RADIUS = 6378137.0  # Earth's radius (m)
+    x = EARTH_RADIUS * np.deg2rad(lon)
+    y = EARTH_RADIUS * np.log(np.tan((np.pi / 4.0 + np.deg2rad(lat) / 2.0)))
+    return x, y
 
 ##################################
 # Declare empty ColumnDataStores #
@@ -84,6 +104,7 @@ segsource_1 = ColumnDataSource(
         "ssrate": [],
         "dsrate": [],
         "active_comp": [],
+        "name": [],
     },
 )
 
@@ -179,71 +200,92 @@ def load_data(folder_number):
         np.power(station.model_east_vel_residual, 2)
         + np.power(station.model_north_vel_residual, 2)
     )
+    lon_station = station.lon.values
+    lat_station = station.lat.values
+    x_station, y_station = wgs84_to_web_mercator(lon_station, lat_station)
     segment = pd.read_csv(folder_name + "/model_segment.csv")
+
+    lon1_seg = segment.lon1.values
+    lat1_seg = segment.lat1.values
+    lon2_seg = segment.lon2.values
+    lat2_seg = segment.lat2.values
+    x1_seg, y1_seg = wgs84_to_web_mercator(lon1_seg, lat1_seg)
+    x2_seg, y2_seg = wgs84_to_web_mercator(lon2_seg, lat2_seg)
+
     meshes = pd.read_csv(folder_name + "/model_meshes.csv")
+    lon1_mesh = meshes.lon1.values
+    lat1_mesh = meshes.lat1.values
+    lon2_mesh = meshes.lon2.values
+    lat2_mesh = meshes.lat2.values
+    lon3_mesh = meshes.lon3.values
+    lat3_mesh = meshes.lat3.values
+    x1_mesh, y1_mesh = wgs84_to_web_mercator(lon1_mesh, lat1_mesh)
+    x2_mesh, y2_mesh = wgs84_to_web_mercator(lon2_mesh, lat2_mesh)
+    x3_mesh, y3_mesh = wgs84_to_web_mercator(lon3_mesh, lat3_mesh)
 
     suffix = f"_{folder_number}"
     stasource.data = {
-        f"lon{suffix}": station.lon,
-        f"lat{suffix}": station.lat,
+        f"lon{suffix}": x_station,
+        f"lat{suffix}": y_station,
         f"obs_east_vel{suffix}": station.east_vel,
         f"obs_north_vel{suffix}": station.north_vel,
-        f"obs_east_vel_lon{suffix}": station.lon + VELOCITY_SCALE * station.east_vel,
-        f"obs_north_vel_lat{suffix}": station.lat + VELOCITY_SCALE * station.north_vel,
+        f"obs_east_vel_lon{suffix}": x_station + VELOCITY_SCALE * station.east_vel,
+        f"obs_north_vel_lat{suffix}": y_station + VELOCITY_SCALE * station.north_vel,
         f"mod_east_vel{suffix}": station.model_east_vel,
         f"mod_north_vel{suffix}": station.model_north_vel,
-        f"mod_east_vel_lon{suffix}": station.lon
+        f"mod_east_vel_lon{suffix}": x_station
         + VELOCITY_SCALE * station.model_east_vel,
-        f"mod_north_vel_lat{suffix}": station.lat
+        f"mod_north_vel_lat{suffix}": y_station
         + VELOCITY_SCALE * station.model_north_vel,
         f"res_east_vel{suffix}": station.model_east_vel_residual,
         f"res_north_vel{suffix}": station.model_north_vel_residual,
-        f"res_east_vel_lon{suffix}": station.lon
+        f"res_east_vel_lon{suffix}": x_station
         + VELOCITY_SCALE * station.model_east_vel_residual,
-        f"res_north_vel_lat{suffix}": station.lat
+        f"res_north_vel_lat{suffix}": y_station
         + VELOCITY_SCALE * station.model_north_vel_residual,
         f"rot_east_vel{suffix}": station.model_east_vel_rotation,
         f"rot_north_vel{suffix}": station.model_north_vel_rotation,
-        f"rot_east_vel_lon{suffix}": station.lon
+        f"rot_east_vel_lon{suffix}": x_station
         + VELOCITY_SCALE * station.model_east_vel_rotation,
-        f"rot_north_vel_lat{suffix}": station.lat
+        f"rot_north_vel_lat{suffix}": y_station
         + VELOCITY_SCALE * station.model_north_vel_rotation,
         f"seg_east_vel{suffix}": station.model_east_elastic_segment,
         f"seg_north_vel{suffix}": station.model_north_elastic_segment,
-        f"seg_east_vel_lon{suffix}": station.lon
+        f"seg_east_vel_lon{suffix}": x_station
         + VELOCITY_SCALE * station.model_east_elastic_segment,
-        f"seg_north_vel_lat{suffix}": station.lat
+        f"seg_north_vel_lat{suffix}": y_station
         + VELOCITY_SCALE * station.model_north_elastic_segment,
         f"tde_east_vel{suffix}": station.model_east_vel_tde,
         f"tde_north_vel{suffix}": station.model_north_vel_tde,
-        f"tde_east_vel_lon{suffix}": station.lon
+        f"tde_east_vel_lon{suffix}": x_station
         + VELOCITY_SCALE * station.model_east_vel_tde,
-        f"tde_north_vel_lat{suffix}": station.lat
+        f"tde_north_vel_lat{suffix}": y_station
         + VELOCITY_SCALE * station.model_north_vel_tde,
         f"str_east_vel{suffix}": station.model_east_vel_block_strain_rate,
         f"str_north_vel{suffix}": station.model_north_vel_block_strain_rate,
-        f"str_east_vel_lon{suffix}": station.lon
+        f"str_east_vel_lon{suffix}": x_station
         + VELOCITY_SCALE * station.model_east_vel_block_strain_rate,
-        f"str_north_vel_lat{suffix}": station.lat
+        f"str_north_vel_lat{suffix}": y_station
         + VELOCITY_SCALE * station.model_north_vel_block_strain_rate,
         f"mog_east_vel{suffix}": station.model_east_vel_mogi,
         f"mog_north_vel{suffix}": station.model_north_vel_mogi,
-        f"mog_east_vel_lon{suffix}": station.lon
+        f"mog_east_vel_lon{suffix}": x_station
         + VELOCITY_SCALE * station.model_east_vel_mogi,
-        f"mog_north_vel_lat{suffix}": station.lat
+        f"mog_north_vel_lat{suffix}": y_station
         + VELOCITY_SCALE * station.model_north_vel_mogi,
         f"res_mag{suffix}": resmag,
-        f"sized_res_mag{suffix}": 10 * VELOCITY_SCALE * resmag,
+        f"sized_res_mag{suffix}": VELOCITY_SCALE/10000 * resmag,
         f"name{suffix}": station.name,
     }
 
     segsource.data = {
+
         "xseg": [
-            np.array((segment.loc[i, "lon1"], segment.loc[i, "lon2"]))
+            np.array([x1_seg[i], x2_seg[i]])
             for i in range(len(segment))
         ],
         "yseg": [
-            np.array((segment.loc[i, "lat1"], segment.loc[i, "lat2"]))
+            np.array([y1_seg[i], y2_seg[i]])
             for i in range(len(segment))
         ],
         "ssrate": list(segment["model_strike_slip_rate"]),
@@ -251,17 +293,20 @@ def load_data(folder_number):
             segment["model_dip_slip_rate"] - segment["model_tensile_slip_rate"]
         ),
         "active_comp": list(segment["model_strike_slip_rate"]),
+        "name_1": list(segment["name"]),
     }
 
     tdesource.data = {
+
         "xseg": [
-            np.array((meshes.lon1[j], meshes.lon2[j], meshes.lon3[j]))
-            for j in range(len(meshes.lon1))
+            np.array([x1_mesh[j], x2_mesh[j], x3_mesh[j]])
+            for j in range(len(meshes))
         ],
         "yseg": [
-            np.array((meshes.lat1[j], meshes.lat2[j], meshes.lat3[j]))
-            for j in range(len(meshes.lon1))
+            np.array([y1_mesh[j], y2_mesh[j], y3_mesh[j]])
+            for j in range(len(meshes))
         ],
+
         "ssrate": list(meshes["strike_slip_rate"]),
         "dsrate": list(meshes["dip_slip_rate"]),
         "active_comp": list(meshes["strike_slip_rate"]),
@@ -283,18 +328,34 @@ folder_load_button_2.on_click(lambda: load_data(2))
 ################
 def get_coastlines():
     coastlines = np.load("GSHHS_c_L1_0_360.npz")
-    return coastlines
+    lon = coastlines["lon"]
+    lat = coastlines["lat"]
+    x, y = wgs84_to_web_mercator(lon, lat)
+    return {'x': x, 'y': y}
+
+
 
 
 fig = figure(
-    x_range=(0, 360),
-    y_range=(-90, 90),
+    x_axis_type="mercator",  # Set x-axis to Mercator projection
+    y_axis_type="mercator",  # Set y-axis to Mercator projection
     width=800,
     height=400,
     match_aspect=True,
-    tools=[BoxZoomTool(match_aspect=True), ResetTool(), PanTool()],
+    tools=[WheelZoomTool(), ResetTool(), PanTool()],
     output_backend="webgl",
 )
+fig.toolbar.active_scroll = fig.select_one(WheelZoomTool)
+if has_mapbox_token:
+    style_id = 'maxballison/cm2i6wejr00b101pbbck1f3to'
+    # Construct tile URL
+    tile_url = f"https://api.mapbox.com/styles/v1/{style_id}/tiles/{{z}}/{{x}}/{{y}}?access_token={mapbox_access_token}"
+
+    # Create a tile source with the Mapbox tiles
+    tile_source = WMTSTileSource(url=tile_url)
+
+    fig.add_tile(tile_source)
+
 fig.xgrid.visible = False
 fig.ygrid.visible = False
 fig.add_layout(LinearAxis(), "above")  # Add axis on the top
@@ -449,22 +510,26 @@ seg_color_obj_2 = fig.multi_line(
 # Coastlines
 COASTLINES = get_coastlines()
 fig.line(
-    COASTLINES["lon"],
-    COASTLINES["lat"],
+    COASTLINES["x"],
+    COASTLINES["y"],
     color="black",
-    line_width=0.5,
+    line_width=0.5 if not has_mapbox_token else 0.0,
 )
+
+
 
 # Create glyphs all potential plotting elements and hide them as default
 loc_obj_1 = fig.scatter(
     "lon_1", "lat_1", source=stasource_1, size=2.7, color="black", visible=False
 )
 
+
 hover_tool_1 = HoverTool(
     tooltips=[
         ("Name", "@name_1"),
+        ("Slip Rate", "@ssrate")
     ],
-    renderers=[loc_obj_1],
+    renderers=[loc_obj_1, seg_obj_1],
 )
 fig.add_tools(hover_tool_1)
 
@@ -478,7 +543,9 @@ res_mag_obj_1 = fig.scatter(
     visible=False,
 )
 
+
 # Folder 1: observed velocities
+
 obs_vel_obj_1 = fig.segment(
     "lon_1",
     "lat_1",
@@ -491,7 +558,9 @@ obs_vel_obj_1 = fig.segment(
     visible=False,
 )
 
+
 # Folder 1: modeled velocities
+
 mod_vel_obj_1 = fig.segment(
     "lon_1",
     "lat_1",
@@ -503,6 +572,7 @@ mod_vel_obj_1 = fig.segment(
     alpha=0.5,
     visible=False,
 )
+
 
 # Folder 1: residual velocities
 res_vel_obj_1 = fig.segment(
@@ -812,7 +882,7 @@ velocity_scaler_callback = CustomJS(
         str_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel_1[i]);
         mog_east_vel_lon_1.push(lon_1[i] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel_1[i]);
         mog_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel_1[i]);
-        sized_res_mag_1.push(10 * VELOCITY_SCALE * velocity_scale_slider * res_mag_1[i]);
+        sized_res_mag_1.push(VELOCITY_SCALE/10000 * velocity_scale_slider * res_mag_1[i]);
     }
 
     // Update velocities with current magnitude scaling
@@ -1035,5 +1105,13 @@ grid_layout[5, 0:1] = pn.Column(
 # Place map
 grid_layout[0:8, 2:10] = fig
 
+api_message = pn.pane.Markdown(
+    """
+    **Note:** Add your mapbox api key in 'mapbox_token.py' for better map styling
+    """
+)
+
+if not has_mapbox_token:
+    grid_layout[8, :] = api_message
 # Show the app
 grid_layout.show()
