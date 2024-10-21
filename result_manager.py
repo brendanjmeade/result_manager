@@ -5,8 +5,13 @@ import numpy as np
 import tkinter as tk
 from tkinter import filedialog
 
+
 from bokeh.models import WMTSTileSource
-import xyzservices.providers as xyz
+
+try:
+    from mapbox_token import mapbox_access_token
+except:
+    mapbox_access_token = None
 
 from bokeh.plotting import figure
 from bokeh.models import (
@@ -16,7 +21,7 @@ from bokeh.models import (
     CustomJS,
     ColumnDataSource,
     LinearAxis,
-    BoxZoomTool,
+    WheelZoomTool,
     ResetTool,
     PanTool,
     Div,
@@ -33,6 +38,11 @@ from bokeh.models import HoverTool
 pn.extension()
 
 VELOCITY_SCALE = 1000
+ 
+if mapbox_access_token == "INSERT_TOKEN_HERE" or mapbox_access_token is None or mapbox_access_token == "":
+    has_mapbox_token = False
+else:
+    has_mapbox_token = True
 
 def wgs84_to_web_mercator(lon, lat):
     # Converts decimal (longitude, latitude) to Web Mercator (x, y)
@@ -332,16 +342,19 @@ fig = figure(
     width=800,
     height=400,
     match_aspect=True,
-    tools=[BoxZoomTool(match_aspect=True), ResetTool(), PanTool()],
+    tools=[WheelZoomTool(), ResetTool(), PanTool()],
     output_backend="webgl",
 )
+fig.toolbar.active_scroll = fig.select_one(WheelZoomTool)
+if has_mapbox_token:
+    style_id = 'maxballison/cm2i6wejr00b101pbbck1f3to'
+    # Construct tile URL
+    tile_url = f"https://api.mapbox.com/styles/v1/{style_id}/tiles/{{z}}/{{x}}/{{y}}?access_token={mapbox_access_token}"
 
-''' Add the tile provider
-topo = WMTSTileSource(
-    url='https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer',
-    attribution='Sources: Esri, TomTom, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors, CNES/Airbus DS, InterMap, NASA/METI, NASA/NGS and the GIS User Community'
-) '''
-fig.add_tile(xyz.Stadia.StamenTerrainBackground)
+    # Create a tile source with the Mapbox tiles
+    tile_source = WMTSTileSource(url=tile_url)
+
+    fig.add_tile(tile_source)
 
 fig.xgrid.visible = False
 fig.ygrid.visible = False
@@ -500,7 +513,7 @@ fig.line(
     COASTLINES["x"],
     COASTLINES["y"],
     color="black",
-    line_width=0.5,
+    line_width=0.5 if not has_mapbox_token else 0.0,
 )
 
 
@@ -1092,5 +1105,13 @@ grid_layout[5, 0:1] = pn.Column(
 # Place map
 grid_layout[0:8, 2:10] = fig
 
+api_message = pn.pane.Markdown(
+    """
+    **Note:** Add your mapbox api key in 'mapbox_token.py' for better map styling
+    """
+)
+
+if not has_mapbox_token:
+    grid_layout[8, :] = api_message
 # Show the app
 grid_layout.show()
