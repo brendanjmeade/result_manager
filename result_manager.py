@@ -26,18 +26,21 @@ from bokeh.models import (
     PanTool,
     Div,
     Button,
-    MultiLine,
-    Patches,
-    ColorBar,
     LinearColorMapper,
+    HoverTool,
+    Arrow,
+    VeeHead,
+    NormalHead,
 )
 from bokeh.palettes import brewer, viridis
 from bokeh.colors import RGB
-from bokeh.models import HoverTool
 
 pn.extension()
 
 VELOCITY_SCALE = 1000
+
+arrow_head_type = VeeHead #determines arrow shape. 'NormalHead' for --▶, VeeHead for -->
+arrow_head_size = 5
  
 if mapbox_access_token == "INSERT_TOKEN_HERE" or mapbox_access_token is None or mapbox_access_token == "":
     has_mapbox_token = False
@@ -545,46 +548,46 @@ res_mag_obj_1 = fig.scatter(
 
 
 # Folder 1: observed velocities
-
-obs_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "obs_east_vel_lon_1",
-    "obs_north_vel_lat_1",
-    source=stasource_1,
+obs_vel_obj_1 = Arrow(
+    end=arrow_head_type(size=arrow_head_size),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="obs_east_vel_lon_1",
+    y_end="obs_north_vel_lat_1",
+    line_color=obs_color_1,
     line_width=1,
-    color=obs_color_1,
-    alpha=0.5,
+    source=stasource_1,
     visible=False,
 )
-
+fig.add_layout(obs_vel_obj_1)
 
 # Folder 1: modeled velocities
-
-mod_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "mod_east_vel_lon_1",
-    "mod_north_vel_lat_1",
-    source=stasource_1,
+mod_vel_obj_1 = Arrow(
+    end=arrow_head_type(size=arrow_head_size),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="mod_east_vel_lon_1",
+    y_end="mod_north_vel_lat_1",
+    line_color=mod_color_1,
     line_width=1,
-    color=mod_color_1,
-    alpha=0.5,
+    source=stasource_1,
     visible=False,
 )
-
+fig.add_layout(mod_vel_obj_1)
 
 # Folder 1: residual velocities
-res_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "res_east_vel_lon_1",
-    "res_north_vel_lat_1",
-    source=stasource_1,
+res_vel_obj_1 = Arrow(
+    end=arrow_head_type(size=arrow_head_size),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="res_east_vel_lon_1",
+    y_end="res_north_vel_lat_1",
+    line_color=res_color_1,
     line_width=1,
-    color=res_color_1,
+    source=stasource_1,
     visible=False,
 )
+fig.add_layout(res_vel_obj_1)
 
 # Folder 1: rotation velocities
 rot_vel_obj_1 = fig.segment(
