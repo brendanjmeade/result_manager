@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import filedialog
 
 
-from bokeh.models import WMTSTileSource
+from bokeh.models import OpenHead, WMTSTileSource
 
 try:
     from mapbox_token import mapbox_access_token
@@ -26,18 +26,22 @@ from bokeh.models import (
     PanTool,
     Div,
     Button,
-    MultiLine,
-    Patches,
-    ColorBar,
     LinearColorMapper,
+    HoverTool,
+    Arrow,
+    VeeHead,
+    NormalHead,
 )
 from bokeh.palettes import brewer, viridis
 from bokeh.colors import RGB
-from bokeh.models import HoverTool
 
 pn.extension()
 
 VELOCITY_SCALE = 1000
+
+arrow_head_type = NormalHead    #--▶ 
+# arrow_head_type = VeeHead     #-->
+arrow_head_size = 4
  
 if mapbox_access_token == "INSERT_TOKEN_HERE" or mapbox_access_token is None or mapbox_access_token == "":
     has_mapbox_token = False
@@ -294,6 +298,12 @@ def load_data(folder_number):
         ),
         "active_comp": list(segment["model_strike_slip_rate"]),
         "name_1": list(segment["name"]),
+        "tsrate": list(segment["model_tensile_slip_rate"]),
+        "lonstart": list(segment["lon1"]),
+        "latstart": list(segment["lat1"]),
+        "lonend": list(segment["lon2"]),
+        "latend": list(segment["lat2"]),
+
     }
 
     tdesource.data = {
@@ -524,14 +534,28 @@ loc_obj_1 = fig.scatter(
 )
 
 
-hover_tool_1 = HoverTool(
+seg_hov_tool_1 = HoverTool(
     tooltips=[
         ("Name", "@name_1"),
-        ("Slip Rate", "@ssrate")
+        ("Start", "(@lonstart, @latstart)"),
+        ("End", "(@lonend, @latend)"),
+        ("Strike-Slip Rate", "@ssrate"),
+        ("Dip-Slip Rate", "@dsrate"),
+        ("Tensile-Slip Rate", "@tsrate"),
     ],
-    renderers=[loc_obj_1, seg_obj_1],
+    renderers=[seg_obj_1],
 )
-fig.add_tools(hover_tool_1)
+fig.add_tools(seg_hov_tool_1)
+
+loc_hov_tool_1 = HoverTool(
+    tooltips=[
+        ("Name", "@name_1"),
+    ],
+    renderers=[loc_obj_1],
+    )
+fig.add_tools(loc_hov_tool_1)
+
+
 
 # Folder 1: residual magnitudes
 res_mag_obj_1 = fig.scatter(
@@ -545,109 +569,142 @@ res_mag_obj_1 = fig.scatter(
 
 
 # Folder 1: observed velocities
+obs_vel_obj_1 = Arrow(
 
-obs_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "obs_east_vel_lon_1",
-    "obs_north_vel_lat_1",
-    source=stasource_1,
+    end=arrow_head_type(fill_color=obs_color_1, fill_alpha=1.0, line_color=obs_color_1, size=arrow_head_size),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="obs_east_vel_lon_1",
+    y_end="obs_north_vel_lat_1",
+    line_color=obs_color_1,
     line_width=1,
-    color=obs_color_1,
-    alpha=0.5,
+    source=stasource_1,
     visible=False,
 )
-
+fig.add_layout(obs_vel_obj_1)
 
 # Folder 1: modeled velocities
-
-mod_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "mod_east_vel_lon_1",
-    "mod_north_vel_lat_1",
-    source=stasource_1,
+mod_vel_obj_1 = Arrow(
+    end=arrow_head_type(fill_color=mod_color_1, fill_alpha=0.5, line_color=mod_color_1, size=arrow_head_size),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="mod_east_vel_lon_1",
+    y_end="mod_north_vel_lat_1",
+    line_color=mod_color_1,
     line_width=1,
-    color=mod_color_1,
-    alpha=0.5,
+    source=stasource_1,
     visible=False,
 )
-
+fig.add_layout(mod_vel_obj_1)
 
 # Folder 1: residual velocities
-res_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "res_east_vel_lon_1",
-    "res_north_vel_lat_1",
-    source=stasource_1,
+res_vel_obj_1 = Arrow(
+    end=arrow_head_type(fill_color=res_color_1, fill_alpha=0.5, line_color=res_color_1, size=arrow_head_size),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="res_east_vel_lon_1",
+    y_end="res_north_vel_lat_1",
+    line_color=res_color_1,
     line_width=1,
-    color=res_color_1,
+    source=stasource_1,
     visible=False,
 )
+fig.add_layout(res_vel_obj_1)
 
-# Folder 1: rotation velocities
-rot_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "rot_east_vel_lon_1",
-    "rot_north_vel_lat_1",
-    source=stasource_1,
+# Folder 1: Rotation Velocities
+rot_vel_obj_1 = Arrow(
+    end=arrow_head_type(
+        fill_color=rot_color_1,
+        fill_alpha=0.5,
+        line_color=rot_color_1,
+        size=arrow_head_size
+    ),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="rot_east_vel_lon_1",
+    y_end="rot_north_vel_lat_1",
+    line_color=rot_color_1,
     line_width=1,
-    color=rot_color_1,
+    source=stasource_1,
     visible=False,
 )
+fig.add_layout(rot_vel_obj_1)
 
-# Folder 1: elastic velocities
-seg_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "seg_east_vel_lon_1",
-    "seg_north_vel_lat_1",
-    source=stasource_1,
+# Folder 1: Elastic Velocities
+seg_vel_obj_1 = Arrow(
+    end=arrow_head_type(
+        fill_color=seg_color_1,
+        fill_alpha=.5,
+        line_color=seg_color_1,
+        size=arrow_head_size
+    ),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="seg_east_vel_lon_1",
+    y_end="seg_north_vel_lat_1",
+    line_color=seg_color_1,
     line_width=1,
-    color=seg_color_1,
+    source=stasource_1,
     visible=False,
 )
+fig.add_layout(seg_vel_obj_1)
 
-# Folder 1: tde velocities
-tde_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "tde_east_vel_lon_1",
-    "tde_north_vel_lat_1",
-    source=stasource_1,
+# Folder 1: TDE Velocities
+tde_vel_obj_1 = Arrow(
+    end=arrow_head_type(
+        fill_color=tde_color_1,
+        fill_alpha=0.5,
+        line_color=tde_color_1,
+        size=arrow_head_size
+    ),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="tde_east_vel_lon_1",
+    y_end="tde_north_vel_lat_1",
+    line_color=tde_color_1,
     line_width=1,
-    color=tde_color_1,
-    alpha=0.5,
+    source=stasource_1,
     visible=False,
 )
+fig.add_layout(tde_vel_obj_1)
 
-# Folder 1: strain velocities
-str_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "str_east_vel_lon_1",
-    "str_north_vel_lat_1",
-    source=stasource_1,
+# Folder 1: Strain Velocities
+str_vel_obj_1 = Arrow(
+    end=arrow_head_type(
+        fill_color=str_color_1,
+        fill_alpha=0.5,
+        line_color=str_color_1,
+        size=arrow_head_size
+    ),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="str_east_vel_lon_1",
+    y_end="str_north_vel_lat_1",
+    line_color=str_color_1,
     line_width=1,
-    color=str_color_1,
-    alpha=0.5,
+    source=stasource_1,
     visible=False,
 )
+fig.add_layout(str_vel_obj_1)
 
-# Folder 1: mogi velocities
-mog_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "mog_east_vel_lon_1",
-    "mog_north_vel_lat_1",
-    source=stasource_1,
+# Folder 1: Mogi Velocities
+mog_vel_obj_1 = Arrow(
+    end=arrow_head_type(
+        fill_color=mog_color_1,
+        fill_alpha=0.5,
+        line_color=mog_color_1,
+        size=arrow_head_size
+    ),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="mog_east_vel_lon_1",
+    y_end="mog_north_vel_lat_1",
+    line_color=mog_color_1,
     line_width=1,
-    color=mog_color_1,
-    alpha=0.5,
+    source=stasource_1,
     visible=False,
 )
+fig.add_layout(mog_vel_obj_1)
 
 ############
 # Folder 2 #
