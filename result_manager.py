@@ -39,14 +39,19 @@ pn.extension()
 
 VELOCITY_SCALE = 1000
 
-arrow_head_type = NormalHead    #--▶ 
+arrow_head_type = NormalHead  # --▶
 # arrow_head_type = VeeHead     #-->
 arrow_head_size = 4
- 
-if mapbox_access_token == "INSERT_TOKEN_HERE" or mapbox_access_token is None or mapbox_access_token == "":
+
+if (
+    mapbox_access_token == "INSERT_TOKEN_HERE"
+    or mapbox_access_token is None
+    or mapbox_access_token == ""
+):
     has_mapbox_token = False
 else:
     has_mapbox_token = True
+
 
 def wgs84_to_web_mercator(lon, lat):
     # Converts decimal (longitude, latitude) to Web Mercator (x, y)
@@ -54,6 +59,7 @@ def wgs84_to_web_mercator(lon, lat):
     x = EARTH_RADIUS * np.deg2rad(lon)
     y = EARTH_RADIUS * np.log(np.tan((np.pi / 4.0 + np.deg2rad(lat) / 2.0)))
     return x, y
+
 
 ##################################
 # Declare empty ColumnDataStores #
@@ -278,20 +284,13 @@ def load_data(folder_number):
         f"mog_north_vel_lat{suffix}": y_station
         + VELOCITY_SCALE * station.model_north_vel_mogi,
         f"res_mag{suffix}": resmag,
-        f"sized_res_mag{suffix}": VELOCITY_SCALE/10000 * resmag,
+        f"sized_res_mag{suffix}": VELOCITY_SCALE / 10000 * resmag,
         f"name{suffix}": station.name,
     }
 
     segsource.data = {
-
-        "xseg": [
-            np.array([x1_seg[i], x2_seg[i]])
-            for i in range(len(segment))
-        ],
-        "yseg": [
-            np.array([y1_seg[i], y2_seg[i]])
-            for i in range(len(segment))
-        ],
+        "xseg": [np.array([x1_seg[i], x2_seg[i]]) for i in range(len(segment))],
+        "yseg": [np.array([y1_seg[i], y2_seg[i]]) for i in range(len(segment))],
         "ssrate": list(segment["model_strike_slip_rate"]),
         "dsrate": list(
             segment["model_dip_slip_rate"] - segment["model_tensile_slip_rate"]
@@ -303,20 +302,15 @@ def load_data(folder_number):
         "latstart": list(segment["lat1"]),
         "lonend": list(segment["lon2"]),
         "latend": list(segment["lat2"]),
-
     }
 
     tdesource.data = {
-
         "xseg": [
-            np.array([x1_mesh[j], x2_mesh[j], x3_mesh[j]])
-            for j in range(len(meshes))
+            np.array([x1_mesh[j], x2_mesh[j], x3_mesh[j]]) for j in range(len(meshes))
         ],
         "yseg": [
-            np.array([y1_mesh[j], y2_mesh[j], y3_mesh[j]])
-            for j in range(len(meshes))
+            np.array([y1_mesh[j], y2_mesh[j], y3_mesh[j]]) for j in range(len(meshes))
         ],
-
         "ssrate": list(meshes["strike_slip_rate"]),
         "dsrate": list(meshes["dip_slip_rate"]),
         "active_comp": list(meshes["strike_slip_rate"]),
@@ -332,6 +326,65 @@ folder_load_button_2.on_click(lambda: load_data(2))
 # END: Load data from button #
 ##############################
 
+###############################
+# Compare residual magnitudes #
+###############################
+
+# # Do DataFrame comparisons for residual improvement
+# if len(stasource_1.data.lon_1) > 0 & len(stasource_2.data.lon_2) > 0:
+#     # Generate temporary dataframes from ColumnDataSources
+#     station_1 = pd.DataFrame(stasource_1.data)
+#     station_2 = pd.DataFrame(stasource_2.data)
+#     # Intersect station dataframes based on lon, lat and retain residual velocity components
+#     common = pd.merge(
+#         station_1,
+#         station_2,
+#         how="inner",
+#         left_on=["lon_1", "lat_1"],
+#         right_on=["lon_2", "lat_2"],
+#     )
+#     # Stations unique to either
+#     unique = pd.concat(
+#         (
+#             station_1[["lon_1", "lat_1"]],
+#             station_2[["lon_2", "lat_2"]].rename(
+#                 columns={"lon_2": "lon_1", "lat_2": "lat_1"}
+#             ),
+#         )
+#     ).drop_duplicates(keep=False)
+
+#     # Calculate residual magnitudes
+#     common["res_mag_1"] = np.sqrt(
+#         common["model_east_vel_residual_1"] ** 2
+#         + common["model_north_vel_residual_1"] ** 2
+#     )
+#     common["res_mag_2"] = np.sqrt(
+#         common["model_east_vel_residual_2"] ** 2
+#         + common["model_north_vel_residual_2"] ** 2
+#     )
+#     common["res_mag_diff"] = common["res_mag_2"] - common["res_mag_1"]
+
+#     # ColumnDataSource to hold data for stations common to both folders
+#     commonsta = ColumnDataSource(
+#         data={
+#             "lon_c": common.lon,
+#             "lat_c": common.lat,
+#             "res_mag_diff": common.res_mag_diff,
+#             "res_mag_diff_sized": 5 * VELOCITY_SCALE * np.abs(common.res_mag_diff),
+#         }
+#     )
+#     # ColumnDataSource to hold data for stations unique to either
+#     uniquesta = ColumnDataSource(
+#         data={
+#             "lon_u": unique.lon_1,
+#             "lat_u": unique.lat_1,
+#         }
+#     )
+
+####################################
+# END: Compare residual magnitudes #
+####################################
+
 
 ################
 # Figure setup #
@@ -341,9 +394,7 @@ def get_coastlines():
     lon = coastlines["lon"]
     lat = coastlines["lat"]
     x, y = wgs84_to_web_mercator(lon, lat)
-    return {'x': x, 'y': y}
-
-
+    return {"x": x, "y": y}
 
 
 fig = figure(
@@ -357,7 +408,7 @@ fig = figure(
 )
 fig.toolbar.active_scroll = fig.select_one(WheelZoomTool)
 if has_mapbox_token:
-    style_id = 'maxballison/cm2i6wejr00b101pbbck1f3to'
+    style_id = "maxballison/cm2i6wejr00b101pbbck1f3to"
     # Construct tile URL
     tile_url = f"https://api.mapbox.com/styles/v1/{style_id}/tiles/{{z}}/{{x}}/{{y}}?access_token={mapbox_access_token}"
 
@@ -527,7 +578,6 @@ fig.line(
 )
 
 
-
 # Create glyphs all potential plotting elements and hide them as default
 loc_obj_1 = fig.scatter(
     "lon_1", "lat_1", source=stasource_1, size=2.7, color="black", visible=False
@@ -552,9 +602,8 @@ loc_hov_tool_1 = HoverTool(
         ("Name", "@name_1"),
     ],
     renderers=[loc_obj_1],
-    )
+)
 fig.add_tools(loc_hov_tool_1)
-
 
 
 # Folder 1: residual magnitudes
@@ -570,8 +619,12 @@ res_mag_obj_1 = fig.scatter(
 
 # Folder 1: observed velocities
 obs_vel_obj_1 = Arrow(
-
-    end=arrow_head_type(fill_color=obs_color_1, fill_alpha=1.0, line_color=obs_color_1, size=arrow_head_size),
+    end=arrow_head_type(
+        fill_color=obs_color_1,
+        fill_alpha=1.0,
+        line_color=obs_color_1,
+        size=arrow_head_size,
+    ),
     x_start="lon_1",
     y_start="lat_1",
     x_end="obs_east_vel_lon_1",
@@ -585,7 +638,12 @@ fig.add_layout(obs_vel_obj_1)
 
 # Folder 1: modeled velocities
 mod_vel_obj_1 = Arrow(
-    end=arrow_head_type(fill_color=mod_color_1, fill_alpha=0.5, line_color=mod_color_1, size=arrow_head_size),
+    end=arrow_head_type(
+        fill_color=mod_color_1,
+        fill_alpha=0.5,
+        line_color=mod_color_1,
+        size=arrow_head_size,
+    ),
     x_start="lon_1",
     y_start="lat_1",
     x_end="mod_east_vel_lon_1",
@@ -599,7 +657,12 @@ fig.add_layout(mod_vel_obj_1)
 
 # Folder 1: residual velocities
 res_vel_obj_1 = Arrow(
-    end=arrow_head_type(fill_color=res_color_1, fill_alpha=0.5, line_color=res_color_1, size=arrow_head_size),
+    end=arrow_head_type(
+        fill_color=res_color_1,
+        fill_alpha=0.5,
+        line_color=res_color_1,
+        size=arrow_head_size,
+    ),
     x_start="lon_1",
     y_start="lat_1",
     x_end="res_east_vel_lon_1",
@@ -617,7 +680,7 @@ rot_vel_obj_1 = Arrow(
         fill_color=rot_color_1,
         fill_alpha=0.5,
         line_color=rot_color_1,
-        size=arrow_head_size
+        size=arrow_head_size,
     ),
     x_start="lon_1",
     y_start="lat_1",
@@ -634,9 +697,9 @@ fig.add_layout(rot_vel_obj_1)
 seg_vel_obj_1 = Arrow(
     end=arrow_head_type(
         fill_color=seg_color_1,
-        fill_alpha=.5,
+        fill_alpha=0.5,
         line_color=seg_color_1,
-        size=arrow_head_size
+        size=arrow_head_size,
     ),
     x_start="lon_1",
     y_start="lat_1",
@@ -655,7 +718,7 @@ tde_vel_obj_1 = Arrow(
         fill_color=tde_color_1,
         fill_alpha=0.5,
         line_color=tde_color_1,
-        size=arrow_head_size
+        size=arrow_head_size,
     ),
     x_start="lon_1",
     y_start="lat_1",
@@ -674,7 +737,7 @@ str_vel_obj_1 = Arrow(
         fill_color=str_color_1,
         fill_alpha=0.5,
         line_color=str_color_1,
-        size=arrow_head_size
+        size=arrow_head_size,
     ),
     x_start="lon_1",
     y_start="lat_1",
@@ -693,7 +756,7 @@ mog_vel_obj_1 = Arrow(
         fill_color=mog_color_1,
         fill_alpha=0.5,
         line_color=mog_color_1,
-        size=arrow_head_size
+        size=arrow_head_size,
     ),
     x_start="lon_1",
     y_start="lat_1",
@@ -977,7 +1040,7 @@ velocity_scaler_callback = CustomJS(
         str_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel_2[j]);
         mog_east_vel_lon_2.push(lon_2[j] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel_2[j]);
         mog_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel_2[j]);
-        sized_res_mag_2.push(10 * VELOCITY_SCALE * velocity_scale_slider * res_mag_2[j]);
+        sized_res_mag_2.push(VELOCITY_SCALE/10000 * velocity_scale_slider * res_mag_2[j]);
     }
 
     // Package everthing back into dictionary
