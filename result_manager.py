@@ -64,6 +64,8 @@ def wgs84_to_web_mercator(lon, lat):
 ##################################
 # Declare empty ColumnDataStores #
 ##################################
+
+# Source for stations. Dict of length n_sta
 stasource_1 = ColumnDataSource(
     data={
         "lon_1": [],
@@ -118,6 +120,7 @@ segsource_1 = ColumnDataSource(
     },
 )
 
+# Source for triangular dislocation elements. Dict of length n_tde
 tdesource_1 = ColumnDataSource(
     data={
         "xseg": [],
@@ -172,6 +175,22 @@ stasource_2 = ColumnDataSource(
 segsource_2 = ColumnDataSource(segsource_1.data.copy())
 tdesource_2 = ColumnDataSource(tdesource_1.data.copy())
 
+# Source for common stations (used in residual comparison). Dict of length n_common_sta
+commonsta = ColumnDataSource(
+    data={
+        "lon_c": [],
+        "lat_c": [],
+        "res_mag_diff": [],
+        "sized_res_mag_diff": [],
+    }
+)
+# Source for unique stations (used in residual comparison). Dict of length n_unique_sta
+uniquesta = ColumnDataSource(
+    data={
+        "lon_u": [],
+        "lat_u": [],
+    }
+)
 
 ################################
 # START: Load data from button #
@@ -316,6 +335,49 @@ def load_data(folder_number):
         "active_comp": list(meshes["strike_slip_rate"]),
     }
 
+    # Residual magnitude comparison
+    # This needs to be inside load_data to appropriately update the CDS
+    # Will only really run if both stasource_1 and stasource_2 aren't empty
+
+    # Do DataFrame comparisons for residual improvement
+    if (len(stasource_1.data["lon_1"]) > 0) & (len(stasource_2.data["lon_2"]) > 0):
+        # Generate temporary dataframes from ColumnDataSources
+        station_1 = pd.DataFrame(stasource_1.data)
+        station_2 = pd.DataFrame(stasource_2.data)
+        # Intersect station dataframes based on lon, lat and retain residual velocity components
+        common = pd.merge(
+            station_1,
+            station_2,
+            how="inner",
+            left_on=["lon_1", "lat_1"],
+            right_on=["lon_2", "lat_2"],
+        )
+        # Stations unique to either
+        unique = pd.concat(
+            (
+                station_1[["lon_1", "lat_1"]],
+                station_2[["lon_2", "lat_2"]].rename(
+                    columns={"lon_2": "lon_1", "lat_2": "lat_1"}
+                ),
+            )
+        ).drop_duplicates(keep=False, ignore_index=True)
+
+        # Calculate residual magnitude difference (magnitudes already calculated in load_data)
+        common["res_mag_diff"] = common["res_mag_2"] - common["res_mag_1"]
+
+        # ColumnDataSource to hold data for stations common to both folders
+        commonsta.data = {
+            "lon_c": common.lon_1,
+            "lat_c": common.lat_1,
+            "res_mag_diff": common.res_mag_diff,
+            "sized_res_mag_diff": VELOCITY_SCALE / 10000 * np.abs(common.res_mag_diff),
+        }
+        # ColumnDataSource to hold data for stations unique to either
+        uniquesta.data = {
+            "lon_u": unique.lon_1,
+            "lat_u": unique.lat_1,
+        }
+
 
 # Update the button callbacks
 folder_load_button_1.on_click(lambda: load_data(1))
@@ -326,64 +388,7 @@ folder_load_button_2.on_click(lambda: load_data(2))
 # END: Load data from button #
 ##############################
 
-###############################
-# Compare residual magnitudes #
-###############################
-
-# # Do DataFrame comparisons for residual improvement
-# if len(stasource_1.data.lon_1) > 0 & len(stasource_2.data.lon_2) > 0:
-#     # Generate temporary dataframes from ColumnDataSources
-#     station_1 = pd.DataFrame(stasource_1.data)
-#     station_2 = pd.DataFrame(stasource_2.data)
-#     # Intersect station dataframes based on lon, lat and retain residual velocity components
-#     common = pd.merge(
-#         station_1,
-#         station_2,
-#         how="inner",
-#         left_on=["lon_1", "lat_1"],
-#         right_on=["lon_2", "lat_2"],
-#     )
-#     # Stations unique to either
-#     unique = pd.concat(
-#         (
-#             station_1[["lon_1", "lat_1"]],
-#             station_2[["lon_2", "lat_2"]].rename(
-#                 columns={"lon_2": "lon_1", "lat_2": "lat_1"}
-#             ),
-#         )
-#     ).drop_duplicates(keep=False)
-
-#     # Calculate residual magnitudes
-#     common["res_mag_1"] = np.sqrt(
-#         common["model_east_vel_residual_1"] ** 2
-#         + common["model_north_vel_residual_1"] ** 2
-#     )
-#     common["res_mag_2"] = np.sqrt(
-#         common["model_east_vel_residual_2"] ** 2
-#         + common["model_north_vel_residual_2"] ** 2
-#     )
-#     common["res_mag_diff"] = common["res_mag_2"] - common["res_mag_1"]
-
-#     # ColumnDataSource to hold data for stations common to both folders
-#     commonsta = ColumnDataSource(
-#         data={
-#             "lon_c": common.lon,
-#             "lat_c": common.lat,
-#             "res_mag_diff": common.res_mag_diff,
-#             "res_mag_diff_sized": 5 * VELOCITY_SCALE * np.abs(common.res_mag_diff),
-#         }
-#     )
-#     # ColumnDataSource to hold data for stations unique to either
-#     uniquesta = ColumnDataSource(
-#         data={
-#             "lon_u": unique.lon_1,
-#             "lat_u": unique.lat_1,
-#         }
-#     )
-
-####################################
-# END: Compare residual magnitudes #
-####################################
+# TODO: See if res compare checkbox can become activated upon completion
 
 
 ################
@@ -430,6 +435,9 @@ slip_color_mapper = LinearColorMapper(palette=brewer["RdBu"][11], low=-100, high
 
 # Residual magnitude color mapper
 resmag_color_mapper = LinearColorMapper(palette=viridis(10), low=0, high=5)
+
+# Residual comparison color mapper
+resmag_diff_color_mapper = LinearColorMapper(palette=brewer["RdBu"][11], low=-5, high=5)
 
 ##############
 # UI objects #
@@ -489,6 +497,8 @@ tde_radio_2 = RadioButtonGroup(labels=["ss", "ds"], active=0)
 velocity_scaler = Slider(
     start=0.0, end=50, value=1, step=1.0, title="vel scale", width=200
 )
+
+residual_compare_checkbox = CheckboxGroup(labels=["res compare"], active=[])
 
 
 ###############
@@ -905,6 +915,30 @@ mog_vel_obj_2 = fig.segment(
     visible=False,
 )
 
+##################
+# Shared objects #
+##################
+
+# Residual magnitude differences
+res_mag_diff_obj = fig.scatter(
+    "lon_c",
+    "lat_c",
+    source=commonsta,
+    size="sized_res_mag_diff",
+    color={"field": "res_mag_diff", "transform": resmag_diff_color_mapper},
+    visible=False,
+)
+
+# Unique stations (only present in one folder)
+res_mag_diff_obj_unique = fig.scatter(
+    "lon_u",
+    "lat_u",
+    source=uniquesta,
+    size=15,
+    marker="x",
+    line_color="black",
+    visible=False,
+)
 
 #############
 # Callbacks #
@@ -920,6 +954,7 @@ velocity_scaler_callback = CustomJS(
     args=dict(
         source1=stasource_1,
         source2=stasource_2,
+        source3=commonsta,
         velocity_scaler=velocity_scaler,
         VELOCITY_SCALE=VELOCITY_SCALE,
     ),
@@ -966,6 +1001,10 @@ velocity_scaler_callback = CustomJS(
     const mog_north_vel_2 = source2.data.mog_north_vel_2
     const res_mag_2 =       source2.data.res_mag_2
     const name_2 = source2.data.name_2
+
+    const lon_c = source3.data.lon_c
+    const lat_c = source3.data.lat_c
+    const res_mag_diff = source3.data.res_mag_diff
 
     // Update velocities with current magnitude scaling
     let obs_east_vel_lon_1 = [];
@@ -1043,10 +1082,16 @@ velocity_scaler_callback = CustomJS(
         sized_res_mag_2.push(VELOCITY_SCALE/10000 * velocity_scale_slider * res_mag_2[j]);
     }
 
+    let sized_res_mag_diff = [];
+    for (let k = 0; k < lon_c.length; k++) {
+        sized_res_mag_diff.push(VELOCITY_SCALE/10000 * velocity_scale_slider * res_mag_diff[k]);
+    }
+
     // Package everthing back into dictionary
     // Try source.change.emit();???
     source1.data = { lon_1, lat_1, obs_east_vel_1, obs_north_vel_1, obs_east_vel_lon_1, obs_north_vel_lat_1, mod_east_vel_1, mod_north_vel_1, mod_east_vel_lon_1, mod_north_vel_lat_1, res_east_vel_1, res_north_vel_1, res_east_vel_lon_1, res_north_vel_lat_1, rot_east_vel_1, rot_north_vel_1, rot_east_vel_lon_1, rot_north_vel_lat_1, seg_east_vel_1, seg_north_vel_1, seg_east_vel_lon_1, seg_north_vel_lat_1, tde_east_vel_1, tde_north_vel_1, tde_east_vel_lon_1, tde_north_vel_lat_1, str_east_vel_1, str_north_vel_1, str_east_vel_lon_1, str_north_vel_lat_1, mog_east_vel_1, mog_north_vel_1, mog_east_vel_lon_1, mog_north_vel_lat_1, res_mag_1, sized_res_mag_1, name_1}
     source2.data = { lon_2, lat_2, obs_east_vel_2, obs_north_vel_2, obs_east_vel_lon_2, obs_north_vel_lat_2, mod_east_vel_2, mod_north_vel_2, mod_east_vel_lon_2, mod_north_vel_lat_2, res_east_vel_2, res_north_vel_2, res_east_vel_lon_2, res_north_vel_lat_2, rot_east_vel_2, rot_north_vel_2, rot_east_vel_lon_2, rot_north_vel_lat_2, seg_east_vel_2, seg_north_vel_2, seg_east_vel_lon_2, seg_north_vel_lat_2, tde_east_vel_2, tde_north_vel_2, tde_east_vel_lon_2, tde_north_vel_lat_2, str_east_vel_2, str_north_vel_2, str_east_vel_lon_2, str_north_vel_lat_2, mog_east_vel_2, mog_north_vel_2, mog_east_vel_lon_2, mog_north_vel_lat_2, res_mag_2, sized_res_mag_2, name_2}
+    source3.data = { lon_c, lat_c, res_mag_diff, sized_res_mag_diff}
 """,
 )
 
@@ -1164,8 +1209,16 @@ tde_radio_2.js_on_change(
 # Velocity slider
 velocity_scaler.js_on_change("value", velocity_scaler_callback)
 
-# Residual comparison
+# Residual comparison. Two nearly identical callbacks to control the two plot objects (common and unique stations)
+residual_compare_checkbox.js_on_change(
+    "active",
+    CustomJS(args={"plot_object": res_mag_diff_obj}, code=checkbox_callback_js),
+)
 
+residual_compare_checkbox.js_on_change(
+    "active",
+    CustomJS(args={"plot_object": res_mag_diff_obj_unique}, code=checkbox_callback_js),
+)
 
 ##############################
 # Place objects on panel grid #
@@ -1219,7 +1272,7 @@ grid_layout[6, 1] = pn.Column(
 )
 
 grid_layout[5, 0:1] = pn.Column(
-    pn.pane.Bokeh(velocity_scaler),
+    pn.pane.Bokeh(velocity_scaler), pn.pane.Bokeh(residual_compare_checkbox)
 )
 
 # Place map
