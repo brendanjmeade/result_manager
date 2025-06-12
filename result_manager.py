@@ -27,6 +27,7 @@ from bokeh.models import (
     Div,
     Button,
     LinearColorMapper,
+    ColorBar,
     HoverTool,
     Arrow,
     VeeHead,
@@ -428,16 +429,50 @@ fig.add_layout(LinearAxis(), "above")  # Add axis on the top
 fig.add_layout(LinearAxis(), "right")  # Add axis on the right
 
 # Grid layout
-grid_layout = pn.GridSpec(sizing_mode="stretch_both", max_height=600)
+grid_layout = pn.GridSpec(sizing_mode="stretch_both", max_height=700)
+
+###############################
+# Color mappers and colorbars #
+###############################
+
+# Set up dummy figure to just hold colorbars
+colorbar_fig = figure(
+    width=250, height=0, toolbar_location=None, min_border=0, outline_line_color=None
+)
 
 # Slip rate color mapper
 slip_color_mapper = LinearColorMapper(palette=brewer["RdBu"][11], low=-100, high=100)
+slip_colorbar = ColorBar(
+    color_mapper=slip_color_mapper,
+    height=15,
+    width=200,
+    title="Slip rate (mm/yr)",
+    orientation="horizontal",
+)
+colorbar_fig.add_layout(slip_colorbar, "below")
 
 # Residual magnitude color mapper
 resmag_color_mapper = LinearColorMapper(palette=viridis(10), low=0, high=5)
+resmag_colorbar = ColorBar(
+    color_mapper=resmag_color_mapper,
+    height=15,
+    width=200,
+    title="Resid. mag. (mm/yr)",
+    orientation="horizontal",
+)
+colorbar_fig.add_layout(resmag_colorbar, "below")
 
 # Residual comparison color mapper
 resmag_diff_color_mapper = LinearColorMapper(palette=brewer["RdBu"][11], low=-5, high=5)
+
+resmag_diff_colorbar = ColorBar(
+    color_mapper=resmag_diff_color_mapper,
+    height=15,
+    width=200,
+    title="Resid. diff. (mm/yr)",
+    orientation="horizontal",
+)
+colorbar_fig.add_layout(resmag_diff_colorbar, "below")
 
 ##############
 # UI objects #
@@ -1241,7 +1276,7 @@ grid_layout[0:1, 0] = pn.Column(
     pn.pane.Bokeh(res_mag_checkbox_1),
 )
 
-grid_layout[6, 0] = pn.Column(
+grid_layout[5, 0] = pn.Column(
     pn.pane.Bokeh(seg_color_checkbox_1),
     pn.pane.Bokeh(seg_color_radio_1),
     pn.pane.Bokeh(tde_checkbox_1),
@@ -1264,19 +1299,24 @@ grid_layout[0:1, 1] = pn.Column(
     pn.pane.Bokeh(res_mag_checkbox_2),
 )
 
-grid_layout[6, 1] = pn.Column(
+grid_layout[5, 1] = pn.Column(
     pn.pane.Bokeh(seg_color_checkbox_2),
     pn.pane.Bokeh(seg_color_radio_2),
     pn.pane.Bokeh(tde_checkbox_2),
     pn.pane.Bokeh(tde_radio_2),
 )
 
-grid_layout[5, 0:1] = pn.Column(
-    pn.pane.Bokeh(velocity_scaler), pn.pane.Bokeh(residual_compare_checkbox)
+grid_layout[4, 0:1] = pn.Column(
+    pn.pane.Bokeh(residual_compare_checkbox), pn.pane.Bokeh(velocity_scaler)
 )
+
+grid_layout[7, 0:1] = pn.Column(colorbar_fig)
+
 
 # Place map
 grid_layout[0:8, 2:10] = fig
+
+# grid_layout[0:8, 2:10] = pn.Column(fig, colorbar_fig)
 
 api_message = pn.pane.Markdown(
     """
