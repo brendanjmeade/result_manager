@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import filedialog
 
 
-from bokeh.models import WMTSTileSource
+from bokeh.models import OpenHead, WMTSTileSource
 
 try:
     from mapbox_token import mapbox_access_token
@@ -26,23 +26,33 @@ from bokeh.models import (
     PanTool,
     Div,
     Button,
-    MultiLine,
-    Patches,
-    ColorBar,
     LinearColorMapper,
+    ColorBar,
+    HoverTool,
+    Arrow,
+    VeeHead,
+    NormalHead,
 )
 from bokeh.palettes import brewer, viridis
 from bokeh.colors import RGB
-from bokeh.models import HoverTool
 
 pn.extension()
 
 VELOCITY_SCALE = 1000
- 
-if mapbox_access_token == "INSERT_TOKEN_HERE" or mapbox_access_token is None or mapbox_access_token == "":
+
+arrow_head_type = NormalHead  # --▶
+# arrow_head_type = VeeHead     #-->
+arrow_head_size = 4
+
+if (
+    mapbox_access_token == "INSERT_TOKEN_HERE"
+    or mapbox_access_token is None
+    or mapbox_access_token == ""
+):
     has_mapbox_token = False
 else:
     has_mapbox_token = True
+
 
 def wgs84_to_web_mercator(lon, lat):
     # Converts decimal (longitude, latitude) to Web Mercator (x, y)
@@ -51,9 +61,12 @@ def wgs84_to_web_mercator(lon, lat):
     y = EARTH_RADIUS * np.log(np.tan((np.pi / 4.0 + np.deg2rad(lat) / 2.0)))
     return x, y
 
+
 ##################################
 # Declare empty ColumnDataStores #
 ##################################
+
+# Source for stations. Dict of length n_sta
 stasource_1 = ColumnDataSource(
     data={
         "lon_1": [],
@@ -108,6 +121,7 @@ segsource_1 = ColumnDataSource(
     },
 )
 
+# Source for triangular dislocation elements. Dict of length n_tde
 tdesource_1 = ColumnDataSource(
     data={
         "xseg": [],
@@ -162,6 +176,22 @@ stasource_2 = ColumnDataSource(
 segsource_2 = ColumnDataSource(segsource_1.data.copy())
 tdesource_2 = ColumnDataSource(tdesource_1.data.copy())
 
+# Source for common stations (used in residual comparison). Dict of length n_common_sta
+commonsta = ColumnDataSource(
+    data={
+        "lon_c": [],
+        "lat_c": [],
+        "res_mag_diff": [],
+        "sized_res_mag_diff": [],
+    }
+)
+# Source for unique stations (used in residual comparison). Dict of length n_unique_sta
+uniquesta = ColumnDataSource(
+    data={
+        "lon_u": [],
+        "lat_u": [],
+    }
+)
 
 ################################
 # START: Load data from button #
@@ -274,43 +304,80 @@ def load_data(folder_number):
         f"mog_north_vel_lat{suffix}": y_station
         + VELOCITY_SCALE * station.model_north_vel_mogi,
         f"res_mag{suffix}": resmag,
-        f"sized_res_mag{suffix}": VELOCITY_SCALE/10000 * resmag,
+        f"sized_res_mag{suffix}": VELOCITY_SCALE / 10000 * resmag,
         f"name{suffix}": station.name,
     }
 
     segsource.data = {
-
-        "xseg": [
-            np.array([x1_seg[i], x2_seg[i]])
-            for i in range(len(segment))
-        ],
-        "yseg": [
-            np.array([y1_seg[i], y2_seg[i]])
-            for i in range(len(segment))
-        ],
+        "xseg": [np.array([x1_seg[i], x2_seg[i]]) for i in range(len(segment))],
+        "yseg": [np.array([y1_seg[i], y2_seg[i]]) for i in range(len(segment))],
         "ssrate": list(segment["model_strike_slip_rate"]),
         "dsrate": list(
             segment["model_dip_slip_rate"] - segment["model_tensile_slip_rate"]
         ),
         "active_comp": list(segment["model_strike_slip_rate"]),
         "name_1": list(segment["name"]),
+        "tsrate": list(segment["model_tensile_slip_rate"]),
+        "lonstart": list(segment["lon1"]),
+        "latstart": list(segment["lat1"]),
+        "lonend": list(segment["lon2"]),
+        "latend": list(segment["lat2"]),
     }
 
     tdesource.data = {
-
         "xseg": [
-            np.array([x1_mesh[j], x2_mesh[j], x3_mesh[j]])
-            for j in range(len(meshes))
+            np.array([x1_mesh[j], x2_mesh[j], x3_mesh[j]]) for j in range(len(meshes))
         ],
         "yseg": [
-            np.array([y1_mesh[j], y2_mesh[j], y3_mesh[j]])
-            for j in range(len(meshes))
+            np.array([y1_mesh[j], y2_mesh[j], y3_mesh[j]]) for j in range(len(meshes))
         ],
-
         "ssrate": list(meshes["strike_slip_rate"]),
         "dsrate": list(meshes["dip_slip_rate"]),
         "active_comp": list(meshes["strike_slip_rate"]),
     }
+
+    # Residual magnitude comparison
+    # This needs to be inside load_data to appropriately update the CDS
+    # Will only really run if both stasource_1 and stasource_2 aren't empty
+
+    # Do DataFrame comparisons for residual improvement
+    if (len(stasource_1.data["lon_1"]) > 0) & (len(stasource_2.data["lon_2"]) > 0):
+        # Generate temporary dataframes from ColumnDataSources
+        station_1 = pd.DataFrame(stasource_1.data)
+        station_2 = pd.DataFrame(stasource_2.data)
+        # Intersect station dataframes based on lon, lat and retain residual velocity components
+        common = pd.merge(
+            station_1,
+            station_2,
+            how="inner",
+            left_on=["lon_1", "lat_1"],
+            right_on=["lon_2", "lat_2"],
+        )
+        # Stations unique to either
+        unique = pd.concat(
+            (
+                station_1[["lon_1", "lat_1"]],
+                station_2[["lon_2", "lat_2"]].rename(
+                    columns={"lon_2": "lon_1", "lat_2": "lat_1"}
+                ),
+            )
+        ).drop_duplicates(keep=False, ignore_index=True)
+
+        # Calculate residual magnitude difference (magnitudes already calculated in load_data)
+        common["res_mag_diff"] = common["res_mag_2"] - common["res_mag_1"]
+
+        # ColumnDataSource to hold data for stations common to both folders
+        commonsta.data = {
+            "lon_c": common.lon_1,
+            "lat_c": common.lat_1,
+            "res_mag_diff": common.res_mag_diff,
+            "sized_res_mag_diff": VELOCITY_SCALE / 10000 * np.abs(common.res_mag_diff),
+        }
+        # ColumnDataSource to hold data for stations unique to either
+        uniquesta.data = {
+            "lon_u": unique.lon_1,
+            "lat_u": unique.lat_1,
+        }
 
 
 # Update the button callbacks
@@ -322,6 +389,8 @@ folder_load_button_2.on_click(lambda: load_data(2))
 # END: Load data from button #
 ##############################
 
+# TODO: See if res compare checkbox can become activated upon completion
+
 
 ################
 # Figure setup #
@@ -331,9 +400,7 @@ def get_coastlines():
     lon = coastlines["lon"]
     lat = coastlines["lat"]
     x, y = wgs84_to_web_mercator(lon, lat)
-    return {'x': x, 'y': y}
-
-
+    return {"x": x, "y": y}
 
 
 fig = figure(
@@ -347,7 +414,7 @@ fig = figure(
 )
 fig.toolbar.active_scroll = fig.select_one(WheelZoomTool)
 if has_mapbox_token:
-    style_id = 'maxballison/cm2i6wejr00b101pbbck1f3to'
+    style_id = "maxballison/cm2i6wejr00b101pbbck1f3to"
     # Construct tile URL
     tile_url = f"https://api.mapbox.com/styles/v1/{style_id}/tiles/{{z}}/{{x}}/{{y}}?access_token={mapbox_access_token}"
 
@@ -362,13 +429,50 @@ fig.add_layout(LinearAxis(), "above")  # Add axis on the top
 fig.add_layout(LinearAxis(), "right")  # Add axis on the right
 
 # Grid layout
-grid_layout = pn.GridSpec(sizing_mode="stretch_both", max_height=600)
+grid_layout = pn.GridSpec(sizing_mode="stretch_both", max_height=700)
+
+###############################
+# Color mappers and colorbars #
+###############################
+
+# Set up dummy figure to just hold colorbars
+colorbar_fig = figure(
+    width=250, height=0, toolbar_location=None, min_border=0, outline_line_color=None
+)
 
 # Slip rate color mapper
 slip_color_mapper = LinearColorMapper(palette=brewer["RdBu"][11], low=-100, high=100)
+slip_colorbar = ColorBar(
+    color_mapper=slip_color_mapper,
+    height=15,
+    width=200,
+    title="Slip rate (mm/yr)",
+    orientation="horizontal",
+)
+colorbar_fig.add_layout(slip_colorbar, "below")
 
 # Residual magnitude color mapper
 resmag_color_mapper = LinearColorMapper(palette=viridis(10), low=0, high=5)
+resmag_colorbar = ColorBar(
+    color_mapper=resmag_color_mapper,
+    height=15,
+    width=200,
+    title="Resid. mag. (mm/yr)",
+    orientation="horizontal",
+)
+colorbar_fig.add_layout(resmag_colorbar, "below")
+
+# Residual comparison color mapper
+resmag_diff_color_mapper = LinearColorMapper(palette=brewer["RdBu"][11], low=-5, high=5)
+
+resmag_diff_colorbar = ColorBar(
+    color_mapper=resmag_diff_color_mapper,
+    height=15,
+    width=200,
+    title="Resid. diff. (mm/yr)",
+    orientation="horizontal",
+)
+colorbar_fig.add_layout(resmag_diff_colorbar, "below")
 
 ##############
 # UI objects #
@@ -428,6 +532,8 @@ tde_radio_2 = RadioButtonGroup(labels=["ss", "ds"], active=0)
 velocity_scaler = Slider(
     start=0.0, end=50, value=1, step=1.0, title="vel scale", width=200
 )
+
+residual_compare_checkbox = CheckboxGroup(labels=["res compare"], active=[])
 
 
 ###############
@@ -517,21 +623,33 @@ fig.line(
 )
 
 
-
 # Create glyphs all potential plotting elements and hide them as default
 loc_obj_1 = fig.scatter(
     "lon_1", "lat_1", source=stasource_1, size=2.7, color="black", visible=False
 )
 
 
-hover_tool_1 = HoverTool(
+seg_hov_tool_1 = HoverTool(
     tooltips=[
         ("Name", "@name_1"),
-        ("Slip Rate", "@ssrate")
+        ("Start", "(@lonstart, @latstart)"),
+        ("End", "(@lonend, @latend)"),
+        ("Strike-Slip Rate", "@ssrate"),
+        ("Dip-Slip Rate", "@dsrate"),
+        ("Tensile-Slip Rate", "@tsrate"),
     ],
-    renderers=[loc_obj_1, seg_obj_1],
+    renderers=[seg_obj_1],
 )
-fig.add_tools(hover_tool_1)
+fig.add_tools(seg_hov_tool_1)
+
+loc_hov_tool_1 = HoverTool(
+    tooltips=[
+        ("Name", "@name_1"),
+    ],
+    renderers=[loc_obj_1],
+)
+fig.add_tools(loc_hov_tool_1)
+
 
 # Folder 1: residual magnitudes
 res_mag_obj_1 = fig.scatter(
@@ -545,109 +663,156 @@ res_mag_obj_1 = fig.scatter(
 
 
 # Folder 1: observed velocities
-
-obs_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "obs_east_vel_lon_1",
-    "obs_north_vel_lat_1",
-    source=stasource_1,
+obs_vel_obj_1 = Arrow(
+    end=arrow_head_type(
+        fill_color=obs_color_1,
+        fill_alpha=1.0,
+        line_color=obs_color_1,
+        size=arrow_head_size,
+    ),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="obs_east_vel_lon_1",
+    y_end="obs_north_vel_lat_1",
+    line_color=obs_color_1,
     line_width=1,
-    color=obs_color_1,
-    alpha=0.5,
+    source=stasource_1,
     visible=False,
 )
-
+fig.add_layout(obs_vel_obj_1)
 
 # Folder 1: modeled velocities
-
-mod_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "mod_east_vel_lon_1",
-    "mod_north_vel_lat_1",
-    source=stasource_1,
+mod_vel_obj_1 = Arrow(
+    end=arrow_head_type(
+        fill_color=mod_color_1,
+        fill_alpha=0.5,
+        line_color=mod_color_1,
+        size=arrow_head_size,
+    ),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="mod_east_vel_lon_1",
+    y_end="mod_north_vel_lat_1",
+    line_color=mod_color_1,
     line_width=1,
-    color=mod_color_1,
-    alpha=0.5,
+    source=stasource_1,
     visible=False,
 )
-
+fig.add_layout(mod_vel_obj_1)
 
 # Folder 1: residual velocities
-res_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "res_east_vel_lon_1",
-    "res_north_vel_lat_1",
-    source=stasource_1,
+res_vel_obj_1 = Arrow(
+    end=arrow_head_type(
+        fill_color=res_color_1,
+        fill_alpha=0.5,
+        line_color=res_color_1,
+        size=arrow_head_size,
+    ),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="res_east_vel_lon_1",
+    y_end="res_north_vel_lat_1",
+    line_color=res_color_1,
     line_width=1,
-    color=res_color_1,
+    source=stasource_1,
     visible=False,
 )
+fig.add_layout(res_vel_obj_1)
 
-# Folder 1: rotation velocities
-rot_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "rot_east_vel_lon_1",
-    "rot_north_vel_lat_1",
-    source=stasource_1,
+# Folder 1: Rotation Velocities
+rot_vel_obj_1 = Arrow(
+    end=arrow_head_type(
+        fill_color=rot_color_1,
+        fill_alpha=0.5,
+        line_color=rot_color_1,
+        size=arrow_head_size,
+    ),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="rot_east_vel_lon_1",
+    y_end="rot_north_vel_lat_1",
+    line_color=rot_color_1,
     line_width=1,
-    color=rot_color_1,
+    source=stasource_1,
     visible=False,
 )
+fig.add_layout(rot_vel_obj_1)
 
-# Folder 1: elastic velocities
-seg_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "seg_east_vel_lon_1",
-    "seg_north_vel_lat_1",
-    source=stasource_1,
+# Folder 1: Elastic Velocities
+seg_vel_obj_1 = Arrow(
+    end=arrow_head_type(
+        fill_color=seg_color_1,
+        fill_alpha=0.5,
+        line_color=seg_color_1,
+        size=arrow_head_size,
+    ),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="seg_east_vel_lon_1",
+    y_end="seg_north_vel_lat_1",
+    line_color=seg_color_1,
     line_width=1,
-    color=seg_color_1,
+    source=stasource_1,
     visible=False,
 )
+fig.add_layout(seg_vel_obj_1)
 
-# Folder 1: tde velocities
-tde_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "tde_east_vel_lon_1",
-    "tde_north_vel_lat_1",
-    source=stasource_1,
+# Folder 1: TDE Velocities
+tde_vel_obj_1 = Arrow(
+    end=arrow_head_type(
+        fill_color=tde_color_1,
+        fill_alpha=0.5,
+        line_color=tde_color_1,
+        size=arrow_head_size,
+    ),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="tde_east_vel_lon_1",
+    y_end="tde_north_vel_lat_1",
+    line_color=tde_color_1,
     line_width=1,
-    color=tde_color_1,
-    alpha=0.5,
+    source=stasource_1,
     visible=False,
 )
+fig.add_layout(tde_vel_obj_1)
 
-# Folder 1: strain velocities
-str_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "str_east_vel_lon_1",
-    "str_north_vel_lat_1",
-    source=stasource_1,
+# Folder 1: Strain Velocities
+str_vel_obj_1 = Arrow(
+    end=arrow_head_type(
+        fill_color=str_color_1,
+        fill_alpha=0.5,
+        line_color=str_color_1,
+        size=arrow_head_size,
+    ),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="str_east_vel_lon_1",
+    y_end="str_north_vel_lat_1",
+    line_color=str_color_1,
     line_width=1,
-    color=str_color_1,
-    alpha=0.5,
+    source=stasource_1,
     visible=False,
 )
+fig.add_layout(str_vel_obj_1)
 
-# Folder 1: mogi velocities
-mog_vel_obj_1 = fig.segment(
-    "lon_1",
-    "lat_1",
-    "mog_east_vel_lon_1",
-    "mog_north_vel_lat_1",
-    source=stasource_1,
+# Folder 1: Mogi Velocities
+mog_vel_obj_1 = Arrow(
+    end=arrow_head_type(
+        fill_color=mog_color_1,
+        fill_alpha=0.5,
+        line_color=mog_color_1,
+        size=arrow_head_size,
+    ),
+    x_start="lon_1",
+    y_start="lat_1",
+    x_end="mog_east_vel_lon_1",
+    y_end="mog_north_vel_lat_1",
+    line_color=mog_color_1,
     line_width=1,
-    color=mog_color_1,
-    alpha=0.5,
+    source=stasource_1,
     visible=False,
 )
+fig.add_layout(mog_vel_obj_1)
 
 ############
 # Folder 2 #
@@ -785,6 +950,30 @@ mog_vel_obj_2 = fig.segment(
     visible=False,
 )
 
+##################
+# Shared objects #
+##################
+
+# Residual magnitude differences
+res_mag_diff_obj = fig.scatter(
+    "lon_c",
+    "lat_c",
+    source=commonsta,
+    size="sized_res_mag_diff",
+    color={"field": "res_mag_diff", "transform": resmag_diff_color_mapper},
+    visible=False,
+)
+
+# Unique stations (only present in one folder)
+res_mag_diff_obj_unique = fig.scatter(
+    "lon_u",
+    "lat_u",
+    source=uniquesta,
+    size=15,
+    marker="x",
+    line_color="black",
+    visible=False,
+)
 
 #############
 # Callbacks #
@@ -800,6 +989,7 @@ velocity_scaler_callback = CustomJS(
     args=dict(
         source1=stasource_1,
         source2=stasource_2,
+        source3=commonsta,
         velocity_scaler=velocity_scaler,
         VELOCITY_SCALE=VELOCITY_SCALE,
     ),
@@ -846,6 +1036,10 @@ velocity_scaler_callback = CustomJS(
     const mog_north_vel_2 = source2.data.mog_north_vel_2
     const res_mag_2 =       source2.data.res_mag_2
     const name_2 = source2.data.name_2
+
+    const lon_c = source3.data.lon_c
+    const lat_c = source3.data.lat_c
+    const res_mag_diff = source3.data.res_mag_diff
 
     // Update velocities with current magnitude scaling
     let obs_east_vel_lon_1 = [];
@@ -920,13 +1114,19 @@ velocity_scaler_callback = CustomJS(
         str_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel_2[j]);
         mog_east_vel_lon_2.push(lon_2[j] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel_2[j]);
         mog_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel_2[j]);
-        sized_res_mag_2.push(10 * VELOCITY_SCALE * velocity_scale_slider * res_mag_2[j]);
+        sized_res_mag_2.push(VELOCITY_SCALE/10000 * velocity_scale_slider * res_mag_2[j]);
+    }
+
+    let sized_res_mag_diff = [];
+    for (let k = 0; k < lon_c.length; k++) {
+        sized_res_mag_diff.push(VELOCITY_SCALE/10000 * velocity_scale_slider * res_mag_diff[k]);
     }
 
     // Package everthing back into dictionary
     // Try source.change.emit();???
     source1.data = { lon_1, lat_1, obs_east_vel_1, obs_north_vel_1, obs_east_vel_lon_1, obs_north_vel_lat_1, mod_east_vel_1, mod_north_vel_1, mod_east_vel_lon_1, mod_north_vel_lat_1, res_east_vel_1, res_north_vel_1, res_east_vel_lon_1, res_north_vel_lat_1, rot_east_vel_1, rot_north_vel_1, rot_east_vel_lon_1, rot_north_vel_lat_1, seg_east_vel_1, seg_north_vel_1, seg_east_vel_lon_1, seg_north_vel_lat_1, tde_east_vel_1, tde_north_vel_1, tde_east_vel_lon_1, tde_north_vel_lat_1, str_east_vel_1, str_north_vel_1, str_east_vel_lon_1, str_north_vel_lat_1, mog_east_vel_1, mog_north_vel_1, mog_east_vel_lon_1, mog_north_vel_lat_1, res_mag_1, sized_res_mag_1, name_1}
     source2.data = { lon_2, lat_2, obs_east_vel_2, obs_north_vel_2, obs_east_vel_lon_2, obs_north_vel_lat_2, mod_east_vel_2, mod_north_vel_2, mod_east_vel_lon_2, mod_north_vel_lat_2, res_east_vel_2, res_north_vel_2, res_east_vel_lon_2, res_north_vel_lat_2, rot_east_vel_2, rot_north_vel_2, rot_east_vel_lon_2, rot_north_vel_lat_2, seg_east_vel_2, seg_north_vel_2, seg_east_vel_lon_2, seg_north_vel_lat_2, tde_east_vel_2, tde_north_vel_2, tde_east_vel_lon_2, tde_north_vel_lat_2, str_east_vel_2, str_north_vel_2, str_east_vel_lon_2, str_north_vel_lat_2, mog_east_vel_2, mog_north_vel_2, mog_east_vel_lon_2, mog_north_vel_lat_2, res_mag_2, sized_res_mag_2, name_2}
+    source3.data = { lon_c, lat_c, res_mag_diff, sized_res_mag_diff}
 """,
 )
 
@@ -1044,8 +1244,16 @@ tde_radio_2.js_on_change(
 # Velocity slider
 velocity_scaler.js_on_change("value", velocity_scaler_callback)
 
-# Residual comparison
+# Residual comparison. Two nearly identical callbacks to control the two plot objects (common and unique stations)
+residual_compare_checkbox.js_on_change(
+    "active",
+    CustomJS(args={"plot_object": res_mag_diff_obj}, code=checkbox_callback_js),
+)
 
+residual_compare_checkbox.js_on_change(
+    "active",
+    CustomJS(args={"plot_object": res_mag_diff_obj_unique}, code=checkbox_callback_js),
+)
 
 ##############################
 # Place objects on panel grid #
@@ -1068,7 +1276,7 @@ grid_layout[0:1, 0] = pn.Column(
     pn.pane.Bokeh(res_mag_checkbox_1),
 )
 
-grid_layout[6, 0] = pn.Column(
+grid_layout[5, 0] = pn.Column(
     pn.pane.Bokeh(seg_color_checkbox_1),
     pn.pane.Bokeh(seg_color_radio_1),
     pn.pane.Bokeh(tde_checkbox_1),
@@ -1091,19 +1299,24 @@ grid_layout[0:1, 1] = pn.Column(
     pn.pane.Bokeh(res_mag_checkbox_2),
 )
 
-grid_layout[6, 1] = pn.Column(
+grid_layout[5, 1] = pn.Column(
     pn.pane.Bokeh(seg_color_checkbox_2),
     pn.pane.Bokeh(seg_color_radio_2),
     pn.pane.Bokeh(tde_checkbox_2),
     pn.pane.Bokeh(tde_radio_2),
 )
 
-grid_layout[5, 0:1] = pn.Column(
-    pn.pane.Bokeh(velocity_scaler),
+grid_layout[4, 0:1] = pn.Column(
+    pn.pane.Bokeh(residual_compare_checkbox), pn.pane.Bokeh(velocity_scaler)
 )
+
+grid_layout[7, 0:1] = pn.Column(colorbar_fig)
+
 
 # Place map
 grid_layout[0:8, 2:10] = fig
+
+# grid_layout[0:8, 2:10] = pn.Column(fig, colorbar_fig)
 
 api_message = pn.pane.Markdown(
     """

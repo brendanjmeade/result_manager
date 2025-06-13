@@ -19,6 +19,7 @@ runs/
 *.npy
 *.npz
 *.geo
+weiss_east_vels_proxy_los.csv
 mesh_test*
 .jupyter/desktop-settings.json
 mapbox_token.py
