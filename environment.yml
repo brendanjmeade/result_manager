@@ -8,3 +8,5 @@ dependencies:
   - panel
   - bokeh
   - xyzservices
+  - setuptools
+  - pip
