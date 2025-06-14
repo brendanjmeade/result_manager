@@ -19,7 +19,7 @@ Graphical result viewer for model output from [celeri](https://github.com/brenda
 3. Create a shortcut in your .bashrc or .zshrc to launch:
 ```
 result_manager() {
-  micromamba activate myenv
+  [conda|micromamba\ activate myenv
   cd ~/path/to/result_manager
   bokeh serve --show result_manager.py
 }
