@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "result_manager"
+version = "0.0.1"
+description = "Graphical output visualization for celeri"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "MIT" }
+authors = [
+  { name = "Brendan Meade", email = "meade@fas.harvard.edu" },
+  { name = "Jack Loveless", email = "jloveles@smith.edu" },
+  { name = "Max Allison" }
+]
+dependencies = [
+  "numpy",
+  "scipy",
+  "pandas",
+  "panel",
+  "bokeh",
+  "xyzservices"
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent"
+]
+
+[project.optional-dependencies]
+
+
+
+[tool.setuptools]
+packages = ["result_manager"]
+zip-safe = false
