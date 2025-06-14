@@ -5,9 +5,9 @@ Graphical result viewer for model output from [celeri](https://github.com/brenda
 ### Getting started
 1. Installation:
 ```
-conda config --prepend channels conda-forge
-conda env create
-conda activate result_manager
+[conda|micromamba] config --prepend channels conda-forge
+[conda|micromamba] env create -f environment.yml
+[conda|micromamba] activate result_manager
 pip install --no-use-pep517 -e .
 ```
 
