@@ -28,6 +28,7 @@ from bokeh.models import (
     Button,
     LinearColorMapper,
     ColorBar,
+    ScaleBar,
     HoverTool,
     Arrow,
     VeeHead,
@@ -437,8 +438,18 @@ grid_layout = pn.GridSpec(sizing_mode="stretch_both", max_height=700)
 
 # Set up dummy figure to just hold colorbars
 colorbar_fig = figure(
-    width=250, height=0, toolbar_location=None, min_border=0, outline_line_color=None
+    width=fig.width,
+    height=0,
+    toolbar_location=None,
+    min_border=0,
+    outline_line_color=None,
+    x_axis_type="mercator",  # Set x-axis to Mercator projection
+    y_axis_type="mercator",  # Set y-axis to Mercator projection
+    match_aspect=True,
+    output_backend="webgl",
 )
+colorbar_fig.xgrid.visible = False
+colorbar_fig.ygrid.visible = False
 
 # Slip rate color mapper
 slip_color_mapper = LinearColorMapper(palette=brewer["RdBu"][11], low=-100, high=100)
@@ -448,8 +459,9 @@ slip_colorbar = ColorBar(
     width=200,
     title="Slip rate (mm/yr)",
     orientation="horizontal",
+    location=(0, 0),
 )
-colorbar_fig.add_layout(slip_colorbar, "below")
+colorbar_fig.add_layout(slip_colorbar)
 
 # Residual magnitude color mapper
 resmag_color_mapper = LinearColorMapper(palette=viridis(10), low=0, high=5)
@@ -459,8 +471,9 @@ resmag_colorbar = ColorBar(
     width=200,
     title="Resid. mag. (mm/yr)",
     orientation="horizontal",
+    location=(250, 0),
 )
-colorbar_fig.add_layout(resmag_colorbar, "below")
+colorbar_fig.add_layout(resmag_colorbar)
 
 # Residual comparison color mapper
 resmag_diff_color_mapper = LinearColorMapper(palette=brewer["RdBu"][11], low=-5, high=5)
@@ -471,8 +484,9 @@ resmag_diff_colorbar = ColorBar(
     width=200,
     title="Resid. diff. (mm/yr)",
     orientation="horizontal",
+    location=(500, 0),
 )
-colorbar_fig.add_layout(resmag_diff_colorbar, "below")
+colorbar_fig.add_layout(resmag_diff_colorbar)
 
 ##############
 # UI objects #
@@ -950,6 +964,23 @@ mog_vel_obj_2 = fig.segment(
     visible=False,
 )
 
+#######################
+# Vector scale object #
+#######################
+
+# velocity_scale_obj = colorbar_fig.segment(
+#     0.07, 0, 0.07 + VELOCITY_SCALE * 10, 0, line_width=3, color="black"
+# )
+#
+
+
+velocity_scale_obj = fig.scatter(
+    fig.x_range.start,
+    fig.y_range.start,
+    size=25,
+)
+
+
 ##################
 # Shared objects #
 ##################
@@ -1276,7 +1307,7 @@ grid_layout[0:1, 0] = pn.Column(
     pn.pane.Bokeh(res_mag_checkbox_1),
 )
 
-grid_layout[5, 0] = pn.Column(
+grid_layout[6, 0] = pn.Column(
     pn.pane.Bokeh(seg_color_checkbox_1),
     pn.pane.Bokeh(seg_color_radio_1),
     pn.pane.Bokeh(tde_checkbox_1),
@@ -1299,18 +1330,18 @@ grid_layout[0:1, 1] = pn.Column(
     pn.pane.Bokeh(res_mag_checkbox_2),
 )
 
-grid_layout[5, 1] = pn.Column(
+grid_layout[6, 1] = pn.Column(
     pn.pane.Bokeh(seg_color_checkbox_2),
     pn.pane.Bokeh(seg_color_radio_2),
     pn.pane.Bokeh(tde_checkbox_2),
     pn.pane.Bokeh(tde_radio_2),
 )
 
-grid_layout[4, 0:1] = pn.Column(
+grid_layout[5, 0:1] = pn.Column(
     pn.pane.Bokeh(residual_compare_checkbox), pn.pane.Bokeh(velocity_scaler)
 )
 
-grid_layout[7, 0:1] = pn.Column(colorbar_fig)
+grid_layout[8, 2:10] = colorbar_fig
 
 
 # Place map
