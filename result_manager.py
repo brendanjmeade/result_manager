@@ -2,6 +2,9 @@ import panel as pn
 import pandas as pd
 import numpy as np
 
+# Suppress copy/slice warning
+pd.options.mode.copy_on_write = True
+
 import tkinter as tk
 from tkinter import filedialog
 
@@ -53,6 +56,31 @@ if (
     has_mapbox_token = False
 else:
     has_mapbox_token = True
+
+# Define some basic coordinate transformation functions
+KM2M = 1.0e3
+RADIUS_EARTH = 6371000
+
+
+def sph2cart(lon, lat, radius):
+    lon_rad = np.deg2rad(lon)
+    lat_rad = np.deg2rad(lat)
+    x = radius * np.cos(lat_rad) * np.cos(lon_rad)
+    y = radius * np.cos(lat_rad) * np.sin(lon_rad)
+    z = radius * np.sin(lat_rad)
+    return x, y, z
+
+
+def cart2sph(x, y, z):
+    azimuth = np.arctan2(y, x)
+    elevation = np.arctan2(z, np.sqrt(x**2 + y**2))
+    r = np.sqrt(x**2 + y**2 + z**2)
+    return azimuth, elevation, r
+
+
+def wrap2360(lon):
+    lon[np.where(lon < 0.0)] += 360.0
+    return lon
 
 
 def wgs84_to_web_mercator(lon, lat):
@@ -244,12 +272,64 @@ def load_data(folder_number):
     x2_seg, y2_seg = wgs84_to_web_mercator(lon2_seg, lat2_seg)
 
     meshes = pd.read_csv(folder_name + "/model_meshes.csv")
-    lon1_mesh = meshes.lon1.values
-    lat1_mesh = meshes.lat1.values
-    lon2_mesh = meshes.lon2.values
-    lat2_mesh = meshes.lat2.values
-    lon3_mesh = meshes.lon3.values
-    lat3_mesh = meshes.lat3.values
+    lon1_mesh = meshes["lon1"]
+    lat1_mesh = meshes["lat1"]
+    dep1_mesh = meshes["dep1"]
+    lon2_mesh = meshes["lon2"]
+    lat2_mesh = meshes["lat2"]
+    dep2_mesh = meshes["dep2"]
+    lon3_mesh = meshes["lon3"]
+    lat3_mesh = meshes["lat3"]
+    dep3_mesh = meshes["dep3"]
+    mesh_idx = meshes["mesh_idx"]
+
+    # Calculate element geometry
+    tri_leg1 = np.transpose(
+        [
+            np.deg2rad(lon2_mesh - lon1_mesh),
+            np.deg2rad(lat2_mesh - lat1_mesh),
+            (1 + KM2M * dep2_mesh / RADIUS_EARTH)
+            - (1 + KM2M * dep1_mesh / RADIUS_EARTH),
+        ]
+    )
+    tri_leg2 = np.transpose(
+        [
+            np.deg2rad(lon3_mesh - lon1_mesh),
+            np.deg2rad(lat3_mesh - lat1_mesh),
+            (1 + KM2M * dep3_mesh / RADIUS_EARTH)
+            - (1 + KM2M * dep1_mesh / RADIUS_EARTH),
+        ]
+    )
+    norm_vec = np.cross(tri_leg1, tri_leg2)
+    azimuth, elevation, r = cart2sph(norm_vec[:, 0], norm_vec[:, 1], norm_vec[:, 2])
+    strike = wrap2360(-np.rad2deg(azimuth))
+    dip = 90 - np.rad2deg(elevation)
+
+    # Project steeply dipping meshes so they're visible
+    for i in np.unique(mesh_idx):
+        this_mesh_els = mesh_idx == i
+        this_mesh_dip = np.mean(dip[this_mesh_els])
+        if this_mesh_dip > 75:
+            dip_dir = np.mean(np.deg2rad(strike[this_mesh_els] + 90))
+            lon1_mesh[this_mesh_els] += np.sin(dip_dir) * np.rad2deg(
+                np.abs(KM2M * dep1_mesh[this_mesh_els] / RADIUS_EARTH)
+            )
+            lat1_mesh[this_mesh_els] += np.cos(dip_dir) * np.rad2deg(
+                np.abs(KM2M * dep1_mesh[this_mesh_els] / RADIUS_EARTH)
+            )
+            lon2_mesh[this_mesh_els] += np.sin(dip_dir) * np.rad2deg(
+                np.abs(KM2M * dep2_mesh[this_mesh_els] / RADIUS_EARTH)
+            )
+            lat2_mesh[this_mesh_els] += np.cos(dip_dir) * np.rad2deg(
+                np.abs(KM2M * dep2_mesh[this_mesh_els] / RADIUS_EARTH)
+            )
+            lon3_mesh[this_mesh_els] += np.sin(dip_dir) * np.rad2deg(
+                np.abs(KM2M * dep3_mesh[this_mesh_els] / RADIUS_EARTH)
+            )
+            lat3_mesh[this_mesh_els] += np.cos(dip_dir) * np.rad2deg(
+                np.abs(KM2M * dep3_mesh[this_mesh_els] / RADIUS_EARTH)
+            )
+
     x1_mesh, y1_mesh = wgs84_to_web_mercator(lon1_mesh, lat1_mesh)
     x2_mesh, y2_mesh = wgs84_to_web_mercator(lon2_mesh, lat2_mesh)
     x3_mesh, y3_mesh = wgs84_to_web_mercator(lon3_mesh, lat3_mesh)
