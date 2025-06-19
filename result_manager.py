@@ -2,12 +2,8 @@ import panel as pn
 import pandas as pd
 import numpy as np
 
-# Suppress copy/slice warning
-pd.options.mode.copy_on_write = True
-
 import tkinter as tk
 from tkinter import filedialog
-
 
 from bokeh.models import OpenHead, WMTSTileSource
 
@@ -31,7 +27,6 @@ from bokeh.models import (
     Button,
     LinearColorMapper,
     ColorBar,
-    ScaleBar,
     HoverTool,
     Arrow,
     VeeHead,
@@ -41,6 +36,9 @@ from bokeh.palettes import brewer, viridis
 from bokeh.colors import RGB
 
 pn.extension()
+# Suppress copy/slice warning
+pd.options.mode.copy_on_write = True
+
 
 VELOCITY_SCALE = 1000
 
@@ -160,6 +158,16 @@ tdesource_1 = ColumnDataSource(
         "active_comp": [],
     },
 )
+
+# Source for TDE outlines. Dict of length n_tde
+tde_perim_source_1 = ColumnDataSource(
+    data={
+        "xseg": [],
+        "yseg": [],
+        "proj_col": [],
+    },
+)
+
 # Make copies for folder 2
 stasource_2 = ColumnDataSource(
     data={
@@ -204,6 +212,7 @@ stasource_2 = ColumnDataSource(
 )
 segsource_2 = ColumnDataSource(segsource_1.data.copy())
 tdesource_2 = ColumnDataSource(tdesource_1.data.copy())
+tde_perim_source_2 = ColumnDataSource(tde_perim_source_1.data.copy())
 
 # Source for common stations (used in residual comparison). Dict of length n_common_sta
 commonsta = ColumnDataSource(
@@ -245,11 +254,13 @@ def load_data(folder_number):
         stasource = stasource_1
         segsource = segsource_1
         tdesource = tdesource_1
+        tde_perim_source = tde_perim_source_1
     else:
         folder_label = folder_label_2
         stasource = stasource_2
         segsource = segsource_2
         tdesource = tdesource_2
+        tde_perim_source = tde_perim_source_2
 
     folder_label.text = folder_name.split("/")[-1]
 
@@ -306,10 +317,13 @@ def load_data(folder_number):
     dip = 90 - np.rad2deg(elevation)
 
     # Project steeply dipping meshes so they're visible
-    for i in np.unique(mesh_idx):
+    mesh_list = np.unique(mesh_idx)
+    proj_mesh_flag = np.zeros_like(mesh_list)
+    for i in mesh_list:
         this_mesh_els = mesh_idx == i
         this_mesh_dip = np.mean(dip[this_mesh_els])
         if this_mesh_dip > 75:
+            proj_mesh_flag[i] = 1
             dip_dir = np.mean(np.deg2rad(strike[this_mesh_els] + 90))
             lon1_mesh[this_mesh_els] += np.sin(dip_dir) * np.rad2deg(
                 np.abs(KM2M * dep1_mesh[this_mesh_els] / RADIUS_EARTH)
@@ -329,10 +343,50 @@ def load_data(folder_number):
             lat3_mesh[this_mesh_els] += np.cos(dip_dir) * np.rad2deg(
                 np.abs(KM2M * dep3_mesh[this_mesh_els] / RADIUS_EARTH)
             )
-
+    proj_mesh_idx = np.where(proj_mesh_flag)[0]
     x1_mesh, y1_mesh = wgs84_to_web_mercator(lon1_mesh, lat1_mesh)
     x2_mesh, y2_mesh = wgs84_to_web_mercator(lon2_mesh, lat2_mesh)
     x3_mesh, y3_mesh = wgs84_to_web_mercator(lon3_mesh, lat3_mesh)
+
+    # Determine mesh perimeter
+    edge1_lon = np.array((lon1_mesh, lon2_mesh))
+    edge1_lat = np.array((lat1_mesh, lat2_mesh))
+    edge1_array = np.vstack(
+        (np.sort(edge1_lon, axis=0), np.sort(edge1_lat, axis=0), mesh_idx)
+    )
+    edge2_lon = np.array((lon2_mesh, lon3_mesh))
+    edge2_lat = np.array((lat2_mesh, lat3_mesh))
+    edge2_array = np.vstack(
+        (np.sort(edge2_lon, axis=0), np.sort(edge2_lat, axis=0), mesh_idx)
+    )
+    edge3_lon = np.array((lon3_mesh, lon1_mesh))
+    edge3_lat = np.array((lat3_mesh, lat1_mesh))
+    edge3_array = np.vstack(
+        (np.sort(edge3_lon, axis=0), np.sort(edge3_lat, axis=0), mesh_idx)
+    )
+    all_edge_array = np.concatenate((edge1_array, edge2_array, edge3_array), axis=1)
+
+    edge1_array_unsorted = np.vstack((edge1_lon, edge1_lat, mesh_idx))
+    edge2_array_unsorted = np.vstack((edge2_lon, edge2_lat, mesh_idx))
+    edge3_array_unsorted = np.vstack((edge3_lon, edge3_lat, mesh_idx))
+    all_edge_array_unsorted = np.concatenate(
+        (edge1_array_unsorted, edge2_array_unsorted, edge3_array_unsorted), axis=1
+    )
+
+    # Find unique edges and their counts
+    unique_edges, unique_edge_index, edge_count = np.unique(
+        all_edge_array, return_index=True, return_counts=True, axis=1
+    )
+    unique_edges_unsorted = all_edge_array_unsorted[:, unique_edge_index]
+    perim_edges = unique_edges_unsorted[:, edge_count == 1]
+    proj_mesh_edge_flag = np.isin(perim_edges[-1, :], proj_mesh_idx).astype(int)
+
+    x1_perim_seg, y1_perim_seg = wgs84_to_web_mercator(
+        perim_edges[0, :], perim_edges[2, :]
+    )
+    x2_perim_seg, y2_perim_seg = wgs84_to_web_mercator(
+        perim_edges[1, :], perim_edges[3, :]
+    )
 
     suffix = f"_{folder_number}"
     stasource.data = {
@@ -415,6 +469,18 @@ def load_data(folder_number):
         "ssrate": list(meshes["strike_slip_rate"]),
         "dsrate": list(meshes["dip_slip_rate"]),
         "active_comp": list(meshes["strike_slip_rate"]),
+    }
+
+    tde_perim_source.data = {
+        "xseg": [
+            np.array([x1_perim_seg[j], x2_perim_seg[j]])
+            for j in range(np.shape(perim_edges)[1])
+        ],
+        "yseg": [
+            np.array([y1_perim_seg[j], y2_perim_seg[j]])
+            for j in range(np.shape(perim_edges)[1])
+        ],
+        "proj_col": list(proj_mesh_edge_flag),
     }
 
     # Residual magnitude comparison
@@ -568,6 +634,9 @@ resmag_diff_colorbar = ColorBar(
 )
 colorbar_fig.add_layout(resmag_diff_colorbar)
 
+# Simple colorbar to guide mesh edge color
+mesh_edge_color_mapper = LinearColorMapper(palette=["black", "red"], low=0, high=1)
+
 ##############
 # UI objects #
 ##############
@@ -655,6 +724,15 @@ tde_obj_1 = fig.patches(
     visible=False,
 )
 
+tde_perim_obj_1 = fig.multi_line(
+    xs="xseg",
+    ys="yseg",
+    line_color={"field": "proj_col", "transform": mesh_edge_color_mapper},
+    source=tde_perim_source_1,
+    line_width=1,
+    visible=False,
+)
+
 # Folder 2: TDE slip rates
 # Plotting these first so that coastlines, segments, and stations lie above
 tde_obj_2 = fig.patches(
@@ -663,6 +741,15 @@ tde_obj_2 = fig.patches(
     source=tdesource_2,
     fill_color={"field": "active_comp", "transform": slip_color_mapper},
     line_width=0,
+    visible=False,
+)
+
+tde_perim_obj_2 = fig.multi_line(
+    xs="xseg",
+    ys="yseg",
+    line_color={"field": "proj_col", "transform": mesh_edge_color_mapper},
+    source=tde_perim_source_2,
+    line_width=1,
     visible=False,
 )
 
@@ -1302,6 +1389,9 @@ seg_color_radio_1.js_on_change(
 tde_checkbox_1.js_on_change(
     "active", CustomJS(args={"plot_object": tde_obj_1}, code=checkbox_callback_js)
 )
+tde_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": tde_perim_obj_1}, code=checkbox_callback_js)
+)
 tde_radio_1.js_on_change(
     "active", CustomJS(args=dict(source=tdesource_1), code=slip_component_callback_js)
 )
@@ -1345,6 +1435,9 @@ seg_color_radio_2.js_on_change(
 )
 tde_checkbox_2.js_on_change(
     "active", CustomJS(args={"plot_object": tde_obj_2}, code=checkbox_callback_js)
+)
+tde_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": tde_perim_obj_2}, code=checkbox_callback_js)
 )
 tde_radio_2.js_on_change(
     "active", CustomJS(args=dict(source=tdesource_2), code=slip_component_callback_js)
