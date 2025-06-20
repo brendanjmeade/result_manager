@@ -220,6 +220,7 @@ commonsta = ColumnDataSource(
         "lon_c": [],
         "lat_c": [],
         "res_mag_diff": [],
+        "abs_res_mag_diff": [],
         "sized_res_mag_diff": [],
     }
 )
@@ -518,6 +519,7 @@ def load_data(folder_number):
             "lon_c": common.lon_1,
             "lat_c": common.lat_1,
             "res_mag_diff": common.res_mag_diff,
+            "abs_res_mag_diff": np.abs(common.res_mag_diff),
             "sized_res_mag_diff": VELOCITY_SCALE / 2500 * np.abs(common.res_mag_diff),
         }
         # ColumnDataSource to hold data for stations unique to either
@@ -1052,105 +1054,156 @@ res_mag_obj_2 = fig.scatter(
 )
 
 # Folder 2: observed velocities
-obs_vel_obj_2 = fig.segment(
-    "lon_2",
-    "lat_2",
-    "obs_east_vel_lon_2",
-    "obs_north_vel_lat_2",
+obs_vel_obj_2 = Arrow(
+    end=arrow_head_type(
+        fill_color=obs_color_2,
+        fill_alpha=2.0,
+        line_color=obs_color_2,
+        size=arrow_head_size,
+    ),
+    x_start="lon_2",
+    y_start="lat_2",
+    x_end="obs_east_vel_lon_2",
+    y_end="obs_north_vel_lat_2",
+    line_color=obs_color_2,
+    line_width=2,
     source=stasource_2,
-    line_width=1,
-    color=obs_color_2,
-    alpha=0.5,
     visible=False,
 )
+fig.add_layout(obs_vel_obj_2)
 
 # Folder 2: modeled velocities
-mod_vel_obj_2 = fig.segment(
-    "lon_2",
-    "lat_2",
-    "mod_east_vel_lon_2",
-    "mod_north_vel_lat_2",
+mod_vel_obj_2 = Arrow(
+    end=arrow_head_type(
+        fill_color=mod_color_2,
+        fill_alpha=0.5,
+        line_color=mod_color_2,
+        size=arrow_head_size,
+    ),
+    x_start="lon_2",
+    y_start="lat_2",
+    x_end="mod_east_vel_lon_2",
+    y_end="mod_north_vel_lat_2",
+    line_color=mod_color_2,
+    line_width=2,
     source=stasource_2,
-    line_width=1,
-    color=mod_color_2,
-    alpha=0.5,
     visible=False,
 )
+fig.add_layout(mod_vel_obj_2)
 
 # Folder 2: residual velocities
-res_vel_obj_2 = fig.segment(
-    "lon_2",
-    "lat_2",
-    "res_east_vel_lon_2",
-    "res_north_vel_lat_2",
+res_vel_obj_2 = Arrow(
+    end=arrow_head_type(
+        fill_color=res_color_2,
+        fill_alpha=0.5,
+        line_color=res_color_2,
+        size=arrow_head_size,
+    ),
+    x_start="lon_2",
+    y_start="lat_2",
+    x_end="res_east_vel_lon_2",
+    y_end="res_north_vel_lat_2",
+    line_color=res_color_2,
+    line_width=2,
     source=stasource_2,
-    line_width=1,
-    color=res_color_2,
     visible=False,
 )
+fig.add_layout(res_vel_obj_2)
 
-# Folder 2: rotation velocities
-rot_vel_obj_2 = fig.segment(
-    "lon_2",
-    "lat_2",
-    "rot_east_vel_lon_2",
-    "rot_north_vel_lat_2",
+# Folder 2: Rotation Velocities
+rot_vel_obj_2 = Arrow(
+    end=arrow_head_type(
+        fill_color=rot_color_2,
+        fill_alpha=0.5,
+        line_color=rot_color_2,
+        size=arrow_head_size,
+    ),
+    x_start="lon_2",
+    y_start="lat_2",
+    x_end="rot_east_vel_lon_2",
+    y_end="rot_north_vel_lat_2",
+    line_color=rot_color_2,
+    line_width=2,
     source=stasource_2,
-    line_width=1,
-    color=rot_color_2,
     visible=False,
 )
+fig.add_layout(rot_vel_obj_2)
 
-# Folder 2: elastic velocities
-seg_vel_obj_2 = fig.segment(
-    "lon_2",
-    "lat_2",
-    "seg_east_vel_lon_2",
-    "seg_north_vel_lat_2",
+# Folder 2: Elastic Velocities
+seg_vel_obj_2 = Arrow(
+    end=arrow_head_type(
+        fill_color=seg_color_2,
+        fill_alpha=0.5,
+        line_color=seg_color_2,
+        size=arrow_head_size,
+    ),
+    x_start="lon_2",
+    y_start="lat_2",
+    x_end="seg_east_vel_lon_2",
+    y_end="seg_north_vel_lat_2",
+    line_color=seg_color_2,
+    line_width=2,
     source=stasource_2,
-    line_width=1,
-    color=seg_color_2,
     visible=False,
 )
+fig.add_layout(seg_vel_obj_2)
 
-# Folder 2: tde velocities
-tde_vel_obj_2 = fig.segment(
-    "lon_2",
-    "lat_2",
-    "tde_east_vel_lon_2",
-    "tde_north_vel_lat_2",
+# Folder 2: TDE Velocities
+tde_vel_obj_2 = Arrow(
+    end=arrow_head_type(
+        fill_color=tde_color_2,
+        fill_alpha=0.5,
+        line_color=tde_color_2,
+        size=arrow_head_size,
+    ),
+    x_start="lon_2",
+    y_start="lat_2",
+    x_end="tde_east_vel_lon_2",
+    y_end="tde_north_vel_lat_2",
+    line_color=tde_color_2,
+    line_width=2,
     source=stasource_2,
-    line_width=1,
-    color=tde_color_2,
-    alpha=0.5,
     visible=False,
 )
+fig.add_layout(tde_vel_obj_2)
 
-# Folder 2: strain velocities
-str_vel_obj_2 = fig.segment(
-    "lon_2",
-    "lat_2",
-    "str_east_vel_lon_2",
-    "str_north_vel_lat_2",
+# Folder 2: Strain Velocities
+str_vel_obj_2 = Arrow(
+    end=arrow_head_type(
+        fill_color=str_color_2,
+        fill_alpha=0.5,
+        line_color=str_color_2,
+        size=arrow_head_size,
+    ),
+    x_start="lon_2",
+    y_start="lat_2",
+    x_end="str_east_vel_lon_2",
+    y_end="str_north_vel_lat_2",
+    line_color=str_color_2,
+    line_width=2,
     source=stasource_2,
-    line_width=1,
-    color=str_color_2,
-    alpha=0.5,
     visible=False,
 )
+fig.add_layout(str_vel_obj_2)
 
-# Folder 2: mogi velocities
-mog_vel_obj_2 = fig.segment(
-    "lon_2",
-    "lat_2",
-    "mog_east_vel_lon_2",
-    "mog_north_vel_lat_2",
+# Folder 2: Mogi Velocities
+mog_vel_obj_2 = Arrow(
+    end=arrow_head_type(
+        fill_color=mog_color_2,
+        fill_alpha=0.5,
+        line_color=mog_color_2,
+        size=arrow_head_size,
+    ),
+    x_start="lon_2",
+    y_start="lat_2",
+    x_end="mog_east_vel_lon_2",
+    y_end="mog_north_vel_lat_2",
+    line_color=mog_color_2,
+    line_width=2,
     source=stasource_2,
-    line_width=1,
-    color=mog_color_2,
-    alpha=0.5,
     visible=False,
 )
+fig.add_layout(mog_vel_obj_2)
 
 #######################
 # Vector scale object #
@@ -1233,7 +1286,8 @@ velocity_scaler_callback = CustomJS(
     const lon_c = source3.data.lon_c
     const lat_c = source3.data.lat_c
     const res_mag_diff = source3.data.res_mag_diff
-
+    const abs_res_mag_diff = source3.data.abs_res_mag_diff
+    
     // Update velocities with current magnitude scaling
     let obs_east_vel_lon_1 = [];
     let obs_north_vel_lat_1 = [];
@@ -1312,14 +1366,14 @@ velocity_scaler_callback = CustomJS(
 
     let sized_res_mag_diff = [];
     for (let k = 0; k < lon_c.length; k++) {
-        sized_res_mag_diff.push(VELOCITY_SCALE/2500 * velocity_scale_slider * res_mag_diff[k]);
+        sized_res_mag_diff.push(VELOCITY_SCALE/2500 * velocity_scale_slider * abs_res_mag_diff[k]);
     }
 
     // Package everthing back into dictionary
     // Try source.change.emit();???
     source1.data = { lon_1, lat_1, obs_east_vel_1, obs_north_vel_1, obs_east_vel_lon_1, obs_north_vel_lat_1, mod_east_vel_1, mod_north_vel_1, mod_east_vel_lon_1, mod_north_vel_lat_1, res_east_vel_1, res_north_vel_1, res_east_vel_lon_1, res_north_vel_lat_1, rot_east_vel_1, rot_north_vel_1, rot_east_vel_lon_1, rot_north_vel_lat_1, seg_east_vel_1, seg_north_vel_1, seg_east_vel_lon_1, seg_north_vel_lat_1, tde_east_vel_1, tde_north_vel_1, tde_east_vel_lon_1, tde_north_vel_lat_1, str_east_vel_1, str_north_vel_1, str_east_vel_lon_1, str_north_vel_lat_1, mog_east_vel_1, mog_north_vel_1, mog_east_vel_lon_1, mog_north_vel_lat_1, res_mag_1, sized_res_mag_1, name_1}
     source2.data = { lon_2, lat_2, obs_east_vel_2, obs_north_vel_2, obs_east_vel_lon_2, obs_north_vel_lat_2, mod_east_vel_2, mod_north_vel_2, mod_east_vel_lon_2, mod_north_vel_lat_2, res_east_vel_2, res_north_vel_2, res_east_vel_lon_2, res_north_vel_lat_2, rot_east_vel_2, rot_north_vel_2, rot_east_vel_lon_2, rot_north_vel_lat_2, seg_east_vel_2, seg_north_vel_2, seg_east_vel_lon_2, seg_north_vel_lat_2, tde_east_vel_2, tde_north_vel_2, tde_east_vel_lon_2, tde_north_vel_lat_2, str_east_vel_2, str_north_vel_2, str_east_vel_lon_2, str_north_vel_lat_2, mog_east_vel_2, mog_north_vel_2, mog_east_vel_lon_2, mog_north_vel_lat_2, res_mag_2, sized_res_mag_2, name_2}
-    source3.data = { lon_c, lat_c, res_mag_diff, sized_res_mag_diff}
+    source3.data = { lon_c, lat_c, res_mag_diff, abs_res_mag_diff, sized_res_mag_diff}
 """,
 )
 
