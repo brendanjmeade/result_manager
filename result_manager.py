@@ -439,7 +439,7 @@ def load_data(folder_number):
         f"mog_north_vel_lat{suffix}": y_station
         + VELOCITY_SCALE * station.model_north_vel_mogi,
         f"res_mag{suffix}": resmag,
-        f"sized_res_mag{suffix}": VELOCITY_SCALE / 10000 * resmag,
+        f"sized_res_mag{suffix}": VELOCITY_SCALE / 2500 * resmag,
         f"name{suffix}": station.name,
     }
 
@@ -518,7 +518,7 @@ def load_data(folder_number):
             "lon_c": common.lon_1,
             "lat_c": common.lat_1,
             "res_mag_diff": common.res_mag_diff,
-            "sized_res_mag_diff": VELOCITY_SCALE / 10000 * np.abs(common.res_mag_diff),
+            "sized_res_mag_diff": VELOCITY_SCALE / 2500 * np.abs(common.res_mag_diff),
         }
         # ColumnDataSource to hold data for stations unique to either
         uniquesta.data = {
@@ -750,6 +750,27 @@ tde_perim_obj_2 = fig.multi_line(
     line_color={"field": "proj_col", "transform": mesh_edge_color_mapper},
     source=tde_perim_source_2,
     line_width=1,
+    visible=False,
+)
+
+# Residual magnitude differences
+res_mag_diff_obj = fig.scatter(
+    "lon_c",
+    "lat_c",
+    source=commonsta,
+    size="sized_res_mag_diff",
+    color={"field": "res_mag_diff", "transform": resmag_diff_color_mapper},
+    visible=False,
+)
+
+# Unique stations (only present in one folder)
+res_mag_diff_obj_unique = fig.scatter(
+    "lon_u",
+    "lat_u",
+    source=uniquesta,
+    size=15,
+    marker="x",
+    line_color="black",
     visible=False,
 )
 
@@ -1147,32 +1168,6 @@ velocity_scale_obj = fig.scatter(
     size=25,
 )
 
-
-##################
-# Shared objects #
-##################
-
-# Residual magnitude differences
-res_mag_diff_obj = fig.scatter(
-    "lon_c",
-    "lat_c",
-    source=commonsta,
-    size="sized_res_mag_diff",
-    color={"field": "res_mag_diff", "transform": resmag_diff_color_mapper},
-    visible=False,
-)
-
-# Unique stations (only present in one folder)
-res_mag_diff_obj_unique = fig.scatter(
-    "lon_u",
-    "lat_u",
-    source=uniquesta,
-    size=15,
-    marker="x",
-    line_color="black",
-    visible=False,
-)
-
 #############
 # Callbacks #
 #############
@@ -1274,7 +1269,7 @@ velocity_scaler_callback = CustomJS(
         str_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel_1[i]);
         mog_east_vel_lon_1.push(lon_1[i] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel_1[i]);
         mog_north_vel_lat_1.push(lat_1[i] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel_1[i]);
-        sized_res_mag_1.push(VELOCITY_SCALE/10000 * velocity_scale_slider * res_mag_1[i]);
+        sized_res_mag_1.push(VELOCITY_SCALE/2500 * velocity_scale_slider * res_mag_1[i]);
     }
 
     // Update velocities with current magnitude scaling
@@ -1312,12 +1307,12 @@ velocity_scaler_callback = CustomJS(
         str_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * str_north_vel_2[j]);
         mog_east_vel_lon_2.push(lon_2[j] + VELOCITY_SCALE * velocity_scale_slider *  mog_east_vel_2[j]);
         mog_north_vel_lat_2.push(lat_2[j] + VELOCITY_SCALE * velocity_scale_slider * mog_north_vel_2[j]);
-        sized_res_mag_2.push(VELOCITY_SCALE/10000 * velocity_scale_slider * res_mag_2[j]);
+        sized_res_mag_2.push(VELOCITY_SCALE/2500 * velocity_scale_slider * res_mag_2[j]);
     }
 
     let sized_res_mag_diff = [];
     for (let k = 0; k < lon_c.length; k++) {
-        sized_res_mag_diff.push(VELOCITY_SCALE/10000 * velocity_scale_slider * res_mag_diff[k]);
+        sized_res_mag_diff.push(VELOCITY_SCALE/2500 * velocity_scale_slider * res_mag_diff[k]);
     }
 
     // Package everthing back into dictionary
