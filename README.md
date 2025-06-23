@@ -6,7 +6,7 @@ Graphical result viewer for model output from [celeri](https://github.com/brenda
 `result_manager` isn't a proper python package but is easy to use:
 
 1. Obtain a Mapbox access token to enable tile-based rendering of topograph and bathymetry:
-- Get a Mapbox access token at: [https://docs.mapbox.com/help/getting-started/access-tokens/]([url](https://docs.mapbox.com/help/getting-started/access-tokens/)).
+- Get a Mapbox access token at: [https://docs.mapbox.com/help/getting-started/access-tokens/](https://docs.mapbox.com/help/getting-started/access-tokens/).
 - Run this command: `cp mapbox_token.py.template mapbox_token.py`.
 - Add your mapbox api key to 'mapbox_token.py' as string.
 
