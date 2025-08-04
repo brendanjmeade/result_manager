@@ -133,6 +133,11 @@ def calculate_fault_bottom_edge(lon1, lat1, lon2, lat2, depth_km, dip_degrees):
 
     # Calculate horizontal distance the fault extends due to dip
     # horizontal_distance = depth / tan(dip)
+    # Prevent division by zero for very small dip angles (horizontal fault)
+    min_dip_rad = np.deg2rad(0.1)  # Minimum dip angle threshold (0.1 degrees)
+    if np.abs(dip_rad) < min_dip_rad:
+        # For nearly horizontal faults, return the top coordinates as bottom coordinates
+        return lon1, lat1, lon2, lat2
     horizontal_distance_km = depth_km / np.tan(dip_rad)
 
     # Convert horizontal distance to angular distance on Earth's surface
