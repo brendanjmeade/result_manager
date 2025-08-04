@@ -81,6 +81,100 @@ def wrap2360(lon):
     return lon
 
 
+def calculate_fault_bottom_edge(lon1, lat1, lon2, lat2, depth_km, dip_degrees):
+    """
+    Calculate the approximate longitude and latitude coordinates of the bottom edge
+    of a fault plane.
+
+    Parameters:
+    -----------
+    lon1, lat1 : float
+        Longitude and latitude of the western-most fault endpoint (degrees)
+    lon2, lat2 : float
+        Longitude and latitude of the eastern-most fault endpoint (degrees)
+    depth_km : float
+        Depth of the fault plane in kilometers
+    dip_degrees : float
+        Dip angle of the fault in degrees (0-90, where 90 is vertical)
+
+    Returns:
+    --------
+    tuple: (lon1_bottom, lat1_bottom, lon2_bottom, lat2_bottom)
+        Bottom edge coordinates in longitude/latitude
+    """
+
+    # Convert angles to radians
+    dip_rad = np.radians(dip_degrees)
+    lat1_rad = np.radians(lat1)
+    lat2_rad = np.radians(lat2)
+    lon1_rad = np.radians(lon1)
+    lon2_rad = np.radians(lon2)
+
+    # Earth radius in kilometers
+    R = 6371.0
+
+    # For a vertical fault (90 degrees), bottom coordinates are the same as top
+    if np.abs(dip_degrees - 90.0) < 1e-6:
+        return lon1, lat1, lon2, lat2
+
+    # Calculate the strike direction (along the fault trace)
+    # This is the bearing from point 1 to point 2
+    delta_lon = lon2_rad - lon1_rad
+
+    # Calculate bearing using spherical trigonometry
+    y = np.sin(delta_lon) * np.cos(lat2_rad)
+    x = np.cos(lat1_rad) * np.sin(lat2_rad) - np.sin(lat1_rad) * np.cos(
+        lat2_rad
+    ) * np.cos(delta_lon)
+    strike_bearing = np.arctan2(y, x)
+
+    # The dip direction is perpendicular to strike (90 degrees clockwise from strike)
+    dip_direction = strike_bearing + np.pi / 2
+
+    # Calculate horizontal distance the fault extends due to dip
+    # horizontal_distance = depth / tan(dip)
+    # Prevent division by zero for very small dip angles (horizontal fault)
+    min_dip_rad = np.deg2rad(0.1)  # Minimum dip angle threshold (0.1 degrees)
+    if np.abs(dip_rad) < min_dip_rad:
+        # For nearly horizontal faults, return the top coordinates as bottom coordinates
+        return lon1, lat1, lon2, lat2
+    horizontal_distance_km = depth_km / np.tan(dip_rad)
+
+    # Convert horizontal distance to angular distance on Earth's surface
+    angular_distance = horizontal_distance_km / R
+
+    # Calculate the bottom edge coordinates for both endpoints
+    # Point 1 bottom coordinates
+    lat1_bottom_rad = np.arcsin(
+        np.sin(lat1_rad) * np.cos(angular_distance)
+        + np.cos(lat1_rad) * np.sin(angular_distance) * np.cos(dip_direction)
+    )
+
+    lon1_bottom_rad = lon1_rad + np.arctan2(
+        np.sin(dip_direction) * np.sin(angular_distance) * np.cos(lat1_rad),
+        np.cos(angular_distance) - np.sin(lat1_rad) * np.sin(lat1_bottom_rad),
+    )
+
+    # Point 2 bottom coordinates
+    lat2_bottom_rad = np.arcsin(
+        np.sin(lat2_rad) * np.cos(angular_distance)
+        + np.cos(lat2_rad) * np.sin(angular_distance) * np.cos(dip_direction)
+    )
+
+    lon2_bottom_rad = lon2_rad + np.arctan2(
+        np.sin(dip_direction) * np.sin(angular_distance) * np.cos(lat2_rad),
+        np.cos(angular_distance) - np.sin(lat2_rad) * np.sin(lat2_bottom_rad),
+    )
+
+    # Convert back to degrees
+    lon1_bottom = np.degrees(lon1_bottom_rad)
+    lat1_bottom = np.degrees(lat1_bottom_rad)
+    lon2_bottom = np.degrees(lon2_bottom_rad)
+    lat2_bottom = np.degrees(lat2_bottom_rad)
+
+    return lon1_bottom, lat1_bottom, lon2_bottom, lat2_bottom
+
+
 def wgs84_to_web_mercator(lon, lat):
     # Converts decimal (longitude, latitude) to Web Mercator (x, y)
     EARTH_RADIUS = 6378137.0  # Earth's radius (m)
@@ -148,6 +242,16 @@ segsource_1 = ColumnDataSource(
     },
 )
 
+# Source for fault surface projections. Dict of length n_segments
+fault_proj_source_1 = ColumnDataSource(
+    data={
+        "xpoly": [],
+        "ypoly": [],
+        "dip": [],
+        "name": [],
+    },
+)
+
 # Source for triangular dislocation elements. Dict of length n_tde
 tdesource_1 = ColumnDataSource(
     data={
@@ -211,6 +315,7 @@ stasource_2 = ColumnDataSource(
     }
 )
 segsource_2 = ColumnDataSource(segsource_1.data.copy())
+fault_proj_source_2 = ColumnDataSource(fault_proj_source_1.data.copy())
 tdesource_2 = ColumnDataSource(tdesource_1.data.copy())
 tde_perim_source_2 = ColumnDataSource(tde_perim_source_1.data.copy())
 
@@ -254,12 +359,14 @@ def load_data(folder_number):
         folder_label = folder_label_1
         stasource = stasource_1
         segsource = segsource_1
+        fault_proj_source = fault_proj_source_1
         tdesource = tdesource_1
         tde_perim_source = tde_perim_source_1
     else:
         folder_label = folder_label_2
         stasource = stasource_2
         segsource = segsource_2
+        fault_proj_source = fault_proj_source_2
         tdesource = tdesource_2
         tde_perim_source = tde_perim_source_2
 
@@ -458,6 +565,48 @@ def load_data(folder_number):
         "latstart": list(segment["lat1"]),
         "lonend": list(segment["lon2"]),
         "latend": list(segment["lat2"]),
+    }
+
+    # Calculate fault surface projections for non-vertical segments
+    fault_proj_polygons_x = []
+    fault_proj_polygons_y = []
+    fault_proj_dips = []
+    fault_proj_names = []
+    
+    for i in range(len(segment)):
+        dip_deg = segment["dip"].iloc[i]
+        locking_depth = segment["locking_depth"].iloc[i]
+        
+        # Only create projection polygons for non-vertical faults
+        if abs(dip_deg - 90.0) > 1e-6:
+            # Calculate bottom edge coordinates
+            lon1_bot, lat1_bot, lon2_bot, lat2_bot = calculate_fault_bottom_edge(
+                segment["lon1"].iloc[i],
+                segment["lat1"].iloc[i], 
+                segment["lon2"].iloc[i],
+                segment["lat2"].iloc[i],
+                locking_depth,
+                dip_deg
+            )
+            
+            # Convert to web mercator
+            x1_bot, y1_bot = wgs84_to_web_mercator(lon1_bot, lat1_bot)
+            x2_bot, y2_bot = wgs84_to_web_mercator(lon2_bot, lat2_bot)
+            
+            # Create polygon coordinates (top edge -> bottom edge -> close)
+            poly_x = np.array([x1_seg[i], x2_seg[i], x2_bot, x1_bot, x1_seg[i]])
+            poly_y = np.array([y1_seg[i], y2_seg[i], y2_bot, y1_bot, y1_seg[i]])
+            
+            fault_proj_polygons_x.append(poly_x)
+            fault_proj_polygons_y.append(poly_y)
+            fault_proj_dips.append(dip_deg)
+            fault_proj_names.append(segment["name"].iloc[i])
+    
+    fault_proj_source.data = {
+        "xpoly": fault_proj_polygons_x,
+        "ypoly": fault_proj_polygons_y,
+        "dip": fault_proj_dips,
+        "name": fault_proj_names,
     }
 
     tdesource.data = {
@@ -668,6 +817,7 @@ seg_color_checkbox_1 = CheckboxGroup(labels=["slip"], active=[])
 seg_color_radio_1 = RadioButtonGroup(labels=["ss", "ds"], active=0)
 tde_checkbox_1 = CheckboxGroup(labels=["tde"], active=[])
 tde_radio_1 = RadioButtonGroup(labels=["ss", "ds"], active=0)
+fault_proj_checkbox_1 = CheckboxGroup(labels=["fault proj"], active=[])
 
 
 # Folder 2 controls
@@ -691,6 +841,7 @@ seg_color_checkbox_2 = CheckboxGroup(labels=["slip"], active=[])
 seg_color_radio_2 = RadioButtonGroup(labels=["ss", "ds"], active=0)
 tde_checkbox_2 = CheckboxGroup(labels=["tde"], active=[])
 tde_radio_2 = RadioButtonGroup(labels=["ss", "ds"], active=0)
+fault_proj_checkbox_2 = CheckboxGroup(labels=["fault proj"], active=[])
 
 
 # Other controls
@@ -752,6 +903,31 @@ tde_perim_obj_2 = fig.multi_line(
     line_color={"field": "proj_col", "transform": mesh_edge_color_mapper},
     source=tde_perim_source_2,
     line_width=1,
+    visible=False,
+)
+
+# Folder 1: Fault surface projections
+fault_proj_obj_1 = fig.patches(
+    xs="xpoly",
+    ys="ypoly", 
+    source=fault_proj_source_1,
+    fill_alpha=0.3,
+    fill_color="lightblue",
+    line_color="blue",
+    line_width=1,
+    visible=False,
+)
+
+# Folder 2: Fault surface projections  
+fault_proj_obj_2 = fig.patches(
+    xs="xpoly",
+    ys="ypoly",
+    source=fault_proj_source_2, 
+    fill_alpha=0.3,
+    fill_color="lightcoral",
+    line_color="red",
+    line_width=1,
+    line_dash="dashed",
     visible=False,
 )
 
@@ -1444,6 +1620,9 @@ tde_checkbox_1.js_on_change(
 tde_radio_1.js_on_change(
     "active", CustomJS(args=dict(source=tdesource_1), code=slip_component_callback_js)
 )
+fault_proj_checkbox_1.js_on_change(
+    "active", CustomJS(args={"plot_object": fault_proj_obj_1}, code=checkbox_callback_js)
+)
 
 # Folder 2
 loc_checkbox_2.js_on_change(
@@ -1491,6 +1670,9 @@ tde_checkbox_2.js_on_change(
 tde_radio_2.js_on_change(
     "active", CustomJS(args=dict(source=tdesource_2), code=slip_component_callback_js)
 )
+fault_proj_checkbox_2.js_on_change(
+    "active", CustomJS(args={"plot_object": fault_proj_obj_2}, code=checkbox_callback_js)
+)
 
 # Shared between folder 1 and 2
 
@@ -1534,6 +1716,7 @@ grid_layout[6, 0] = pn.Column(
     pn.pane.Bokeh(seg_color_radio_1),
     pn.pane.Bokeh(tde_checkbox_1),
     pn.pane.Bokeh(tde_radio_1),
+    pn.pane.Bokeh(fault_proj_checkbox_1),
 )
 
 # Placing controls for folder 2
@@ -1557,6 +1740,7 @@ grid_layout[6, 1] = pn.Column(
     pn.pane.Bokeh(seg_color_radio_2),
     pn.pane.Bokeh(tde_checkbox_2),
     pn.pane.Bokeh(tde_radio_2),
+    pn.pane.Bokeh(fault_proj_checkbox_2),
 )
 
 grid_layout[5, 0:1] = pn.Column(
