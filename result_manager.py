@@ -572,36 +572,36 @@ def load_data(folder_number):
     fault_proj_polygons_y = []
     fault_proj_dips = []
     fault_proj_names = []
-    
+
     for i in range(len(segment)):
         dip_deg = segment["dip"].iloc[i]
         locking_depth = segment["locking_depth"].iloc[i]
-        
+
         # Only create projection polygons for non-vertical faults
         if abs(dip_deg - 90.0) > 1e-6:
             # Calculate bottom edge coordinates
             lon1_bot, lat1_bot, lon2_bot, lat2_bot = calculate_fault_bottom_edge(
                 segment["lon1"].iloc[i],
-                segment["lat1"].iloc[i], 
+                segment["lat1"].iloc[i],
                 segment["lon2"].iloc[i],
                 segment["lat2"].iloc[i],
                 locking_depth,
-                dip_deg
+                dip_deg,
             )
-            
+
             # Convert to web mercator
             x1_bot, y1_bot = wgs84_to_web_mercator(lon1_bot, lat1_bot)
             x2_bot, y2_bot = wgs84_to_web_mercator(lon2_bot, lat2_bot)
-            
+
             # Create polygon coordinates (top edge -> bottom edge -> close)
             poly_x = np.array([x1_seg[i], x2_seg[i], x2_bot, x1_bot, x1_seg[i]])
             poly_y = np.array([y1_seg[i], y2_seg[i], y2_bot, y1_bot, y1_seg[i]])
-            
+
             fault_proj_polygons_x.append(poly_x)
             fault_proj_polygons_y.append(poly_y)
             fault_proj_dips.append(dip_deg)
             fault_proj_names.append(segment["name"].iloc[i])
-    
+
     fault_proj_source.data = {
         "xpoly": fault_proj_polygons_x,
         "ypoly": fault_proj_polygons_y,
@@ -909,7 +909,7 @@ tde_perim_obj_2 = fig.multi_line(
 # Folder 1: Fault surface projections
 fault_proj_obj_1 = fig.patches(
     xs="xpoly",
-    ys="ypoly", 
+    ys="ypoly",
     source=fault_proj_source_1,
     fill_alpha=0.3,
     fill_color="lightblue",
@@ -918,14 +918,14 @@ fault_proj_obj_1 = fig.patches(
     visible=False,
 )
 
-# Folder 2: Fault surface projections  
+# Folder 2: Fault surface projections
 fault_proj_obj_2 = fig.patches(
     xs="xpoly",
     ys="ypoly",
-    source=fault_proj_source_2, 
+    source=fault_proj_source_2,
     fill_alpha=0.3,
-    fill_color="lightcoral",
-    line_color="red",
+    fill_color="lightgreen",
+    line_color="green",
     line_width=1,
     line_dash="dashed",
     visible=False,
@@ -966,9 +966,9 @@ seg_obj_1 = fig.multi_line(
 seg_obj_2 = fig.multi_line(
     xs="xseg",
     ys="yseg",
-    line_color="blue",
+    line_color="green",
     source=segsource_2,
-    line_width=1,
+    line_width=3,
     line_dash="dashed",
     visible=True,
 )
@@ -1621,7 +1621,8 @@ tde_radio_1.js_on_change(
     "active", CustomJS(args=dict(source=tdesource_1), code=slip_component_callback_js)
 )
 fault_proj_checkbox_1.js_on_change(
-    "active", CustomJS(args={"plot_object": fault_proj_obj_1}, code=checkbox_callback_js)
+    "active",
+    CustomJS(args={"plot_object": fault_proj_obj_1}, code=checkbox_callback_js),
 )
 
 # Folder 2
@@ -1671,7 +1672,8 @@ tde_radio_2.js_on_change(
     "active", CustomJS(args=dict(source=tdesource_2), code=slip_component_callback_js)
 )
 fault_proj_checkbox_2.js_on_change(
-    "active", CustomJS(args={"plot_object": fault_proj_obj_2}, code=checkbox_callback_js)
+    "active",
+    CustomJS(args={"plot_object": fault_proj_obj_2}, code=checkbox_callback_js),
 )
 
 # Shared between folder 1 and 2
