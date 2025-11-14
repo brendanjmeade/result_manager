@@ -402,6 +402,11 @@ def load_data(folder_number):
     dep3_mesh = meshes["dep3"]
     mesh_idx = meshes["mesh_idx"]
 
+    # Check if somehow 360 wrapping matters
+    lon1_mesh[lon1_mesh < 0] = lon1_mesh[lon1_mesh < 0] + 360
+    lon2_mesh[lon2_mesh < 0] = lon2_mesh[lon2_mesh < 0] + 360
+    lon3_mesh[lon3_mesh < 0] = lon3_mesh[lon3_mesh < 0] + 360
+
     # Calculate element geometry
     tri_leg1 = np.transpose(
         [
