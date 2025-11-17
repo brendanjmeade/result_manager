@@ -403,9 +403,9 @@ def load_data(folder_number):
     mesh_idx = meshes["mesh_idx"]
 
     # Check if somehow 360 wrapping matters
-    lon1_mesh[lon1_mesh < 0] = lon1_mesh[lon1_mesh < 0] + 360
-    lon2_mesh[lon2_mesh < 0] = lon2_mesh[lon2_mesh < 0] + 360
-    lon3_mesh[lon3_mesh < 0] = lon3_mesh[lon3_mesh < 0] + 360
+    lon1_mesh[lon1_mesh < 0] += 360
+    lon2_mesh[lon2_mesh < 0] += 360
+    lon3_mesh[lon3_mesh < 0] += 360
 
     # Calculate element geometry
     tri_leg1 = np.transpose(
@@ -425,15 +425,20 @@ def load_data(folder_number):
         ]
     )
     norm_vec = np.cross(tri_leg1, tri_leg2)
+    tri_area = np.linalg.norm(norm_vec, axis=1)
     azimuth, elevation, r = cart2sph(norm_vec[:, 0], norm_vec[:, 1], norm_vec[:, 2])
     strike = wrap2360(-np.rad2deg(azimuth))
     dip = 90 - np.rad2deg(elevation)
+    # Correct dips > 90
+    dip[dip > 90] = 180.0 - dip[dip > 90]
 
     # Project steeply dipping meshes so they're visible
     mesh_list = np.unique(mesh_idx)
     proj_mesh_flag = np.zeros_like(mesh_list)
+    mesh_area = np.zeros_like(mesh_list, dtype=float)
     for i in mesh_list:
         this_mesh_els = mesh_idx == i
+        mesh_area[i] = np.mean(tri_area[this_mesh_els])
         this_mesh_dip = np.mean(dip[this_mesh_els])
         if this_mesh_dip > 75:
             proj_mesh_flag[i] = 1
@@ -614,16 +619,26 @@ def load_data(folder_number):
         "name": fault_proj_names,
     }
 
+    # Sort plotted mesh data, based on total mesh areas
+    mesh_plot_order = np.argsort(-mesh_area)
+    mesh_plot_order_index = np.zeros((0, 1))
+    for i in mesh_plot_order:
+        mesh_plot_order_index = np.concatenate(
+            (mesh_plot_order_index, np.argwhere(meshes["mesh_idx"] == i)), axis=0
+        )
+
     tdesource.data = {
         "xseg": [
-            np.array([x1_mesh[j], x2_mesh[j], x3_mesh[j]]) for j in range(len(meshes))
+            np.array([x1_mesh[j], x2_mesh[j], x3_mesh[j]])
+            for j in mesh_plot_order_index[:, 0]
         ],
         "yseg": [
-            np.array([y1_mesh[j], y2_mesh[j], y3_mesh[j]]) for j in range(len(meshes))
+            np.array([y1_mesh[j], y2_mesh[j], y3_mesh[j]])
+            for j in mesh_plot_order_index[:, 0]
         ],
-        "ssrate": list(meshes["strike_slip_rate"]),
-        "dsrate": list(meshes["dip_slip_rate"]),
-        "active_comp": list(meshes["strike_slip_rate"]),
+        "ssrate": list(meshes["strike_slip_rate"][mesh_plot_order_index[:, 0]]),
+        "dsrate": list(meshes["dip_slip_rate"][mesh_plot_order_index[:, 0]]),
+        "active_comp": list(meshes["strike_slip_rate"][mesh_plot_order_index[:, 0]]),
     }
 
     tde_perim_source.data = {
